@@ -1,0 +1,183 @@
+# The Kaplan–Meier Estimator
+
+The Kaplan–Meier (KM) estimator, introduced by Edward Kaplan and Paul Meier in 1958, is the most widely used method in survival analysis. It is a **non-parametric** estimator of the survival function that correctly handles right-censored observations without assuming any parametric form for $S(t)$.
+
+```{r}
+#| label: setup-km
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(survminer); library(ggplot2)
+  library(dplyr); library(knitr); library(kableExtra)
+})
+theme_set(theme_bw(base_size = 13))
+```
+
+## The Product-Limit Formula
+
+Let $t_1 < t_2 < \cdots < t_k$ be the $k$ distinct observed event times. At each $t_j$, define:
+
+- $d_j$ = number of events (failures) at time $t_j$
+- $n_j$ = number **at risk** just *before* time $t_j$ (includes those censored at $t_j$)
+
+The **Kaplan–Meier estimator** is:
+
+$$\hat{S}(t) = \prod_{j:\; t_j \leq t} \left(1 - \frac{d_j}{n_j}\right)$$
+
+The product structure gives the estimator its alternative name: the **product-limit estimator**. Each factor $1 - d_j/n_j$ is the estimated conditional probability of surviving past $t_j$ given survival to $t_j$.
+
+### Properties
+
+- $\hat{S}(t) = 1$ for $t < t_1$ (first event time)
+- $\hat{S}(t)$ is a step function with jumps only at observed event times
+- If the largest observed time is an event, $\hat{S}(t_{\max}) = 0$; if it is censored, $\hat{S}(t)$ remains positive beyond the last event
+
+## Manual Calculation
+
+```{r}
+#| label: tbl-km-manual
+#| tbl-cap: "Manual KM calculation for a small dataset (n = 12)"
+
+# Small dataset: times and event indicators
+times  <- c(1,2,3,3,4,5,7,8,8,10,12,14)
+events <- c(1,1,1,0,1,0,1,1,0,1, 0, 1)
+
+# Build KM table
+ord  <- order(times)
+t_ord <- times[ord]; e_ord <- events[ord]
+
+# Count at risk, events, censored at each unique time
+uniq_t  <- unique(t_ord[e_ord == 1])  # only event times
+km_tbl <- data.frame(t_j = uniq_t)
+km_tbl$n_j  <- sapply(km_tbl$t_j, \(x) sum(t_ord >= x))
+km_tbl$d_j  <- sapply(km_tbl$t_j, \(x) sum(t_ord == x & e_ord == 1))
+km_tbl$c_j  <- sapply(km_tbl$t_j, \(x) sum(t_ord == x & e_ord == 0))
+km_tbl$cond_surv <- 1 - km_tbl$d_j / km_tbl$n_j
+km_tbl$S_t  <- cumprod(km_tbl$cond_surv)
+
+# Greenwood variance
+km_tbl$greenwood <- cumsum(km_tbl$d_j / (km_tbl$n_j * (km_tbl$n_j - km_tbl$d_j)))
+km_tbl$var_S   <- km_tbl$S_t^2 * km_tbl$greenwood
+km_tbl$se_S    <- sqrt(km_tbl$var_S)
+km_tbl$CI_lo   <- pmax(0, km_tbl$S_t - 1.96 * km_tbl$se_S)
+km_tbl$CI_hi   <- pmin(1, km_tbl$S_t + 1.96 * km_tbl$se_S)
+
+km_tbl |>
+  mutate(across(c(cond_surv,S_t,se_S,CI_lo,CI_hi), \(x) round(x,4))) |>
+  kbl(col.names = c("t_j","n_j","d_j","c_j","1-d/n",
+                    "Ŝ(t)","Greenwood","Var[Ŝ]","SE","95% Lo","95% Hi"),
+      align = "c") |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center", font_size = 11)
+```
+
+## Greenwood's Formula
+
+The variance of the KM estimator is given by **Greenwood's formula**:
+
+$$\widehat{\text{Var}}[\hat{S}(t)] = [\hat{S}(t)]^2 \sum_{t_j \leq t} \frac{d_j}{n_j(n_j - d_j)}$$
+
+A 95% pointwise confidence interval uses the linear (plain) scale:
+
+$$\hat{S}(t) \pm 1.96 \cdot \widehat{\text{SE}}[\hat{S}(t)]$$
+
+However, this can yield values outside $[0,1]$. The **log-log (complementary log-log) transformation** is preferred:
+
+$$\exp\!\left[\log\hat{S}(t) \cdot \exp\!\left(\pm \frac{z_{0.025}}{\log\hat{S}(t)} \sqrt{\widehat{\text{Var}}[\log(-\log\hat{S}(t))]}\right)\right]$$
+
+This always stays in $[0,1]$ and performs better in small samples.
+
+## KM in R: Full Worked Example
+
+```{r}
+#| label: fig-km-lung
+#| fig-cap: "Kaplan–Meier survival curve with 95% confidence band and risk table (NCCTG lung cancer data)"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 7
+
+data(lung)
+lung$SurvObj <- Surv(lung$time, lung$status == 2)
+km_fit <- survfit(SurvObj ~ 1, data = lung)
+
+ggsurvplot(km_fit,
+           data           = lung,
+           conf.int       = TRUE,
+           conf.int.fill  = "#2C7BB6",
+           conf.int.alpha = 0.15,
+           risk.table     = TRUE,
+           risk.table.col = "strata",
+           xlab           = "Time (days)",
+           ylab           = "Survival Probability S(t)",
+           title          = "Overall Survival: NCCTG Lung Cancer Dataset",
+           palette        = "#2C7BB6",
+           ggtheme        = theme_bw(base_size = 13),
+           surv.median.line = "hv",
+           break.time.by  = 100)
+```
+
+```{r}
+#| label: tbl-km-estimates
+#| tbl-cap: "KM survival estimates at selected time points"
+
+km_sum <- summary(km_fit, times = seq(100, 900, by = 100))
+data.frame(
+  Time     = km_sum$time,
+  At_Risk  = km_sum$n.risk,
+  Events   = km_sum$n.event,
+  Survival = round(km_sum$surv, 3),
+  Std_Err  = round(km_sum$std.err, 3),
+  Lower95  = round(km_sum$lower, 3),
+  Upper95  = round(km_sum$upper, 3)
+) |>
+  kbl(col.names = c("Time","n.risk","n.event","Ŝ(t)","SE","Lower 95%","Upper 95%"),
+      align = "c") |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center")
+```
+
+## Stratified KM Analysis
+
+When groups differ in survival, stratified KM curves reveal the pattern:
+
+```{r}
+#| label: fig-km-sex
+#| fig-cap: "KM curves by sex with log-rank p-value and risk table"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 7
+
+km_sex <- survfit(SurvObj ~ sex, data = lung)
+
+ggsurvplot(km_sex,
+           data        = lung,
+           conf.int    = TRUE,
+           pval        = TRUE,
+           pval.method = TRUE,
+           risk.table  = TRUE,
+           legend.labs = c("Male","Female"),
+           palette     = c("#D7191C","#2C7BB6"),
+           xlab        = "Time (days)",
+           ylab        = "Survival Probability",
+           title       = "Survival by Sex: NCCTG Lung Cancer Data",
+           ggtheme     = theme_bw(base_size = 13),
+           surv.median.line = "hv")
+```
+
+## Median Survival Time
+
+The **median survival time** $\hat{t}_{0.5}$ is the smallest time at which $\hat{S}(t) \leq 0.5$:
+
+```{r}
+#| label: median-survival
+
+print(km_sex)   # shows median and 95% CI for each stratum
+```
+
+::: {.callout-caution title="Historical Insights"}
+**Edward L. Kaplan (1920–2006)** and **Paul Meier (1924–2011)** submitted their now-famous paper to the *Journal of the American Statistical Association* in 1954 — only to have it returned twice for revisions over four years before publication in 1958. It went on to become one of the most-cited scientific papers of all time, with over 50,000 citations. The authors were unacquainted before their editor suggested they combine their independent but similar submissions into a single paper.
+:::
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"You can have data without information, but you cannot have information without data."*\
+**— Daniel Keys Moran**
+:::

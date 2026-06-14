@@ -1,0 +1,116 @@
+# Comparing Survival Experiences
+
+A central question in many studies is whether two or more groups differ in their survival experience. This chapter presents the major non-parametric tests for comparing survival curves.
+
+```{r}
+#| label: setup-comp
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(survminer); library(ggplot2)
+  library(dplyr); library(knitr); library(kableExtra)
+})
+theme_set(theme_bw(base_size = 13))
+data(lung)
+```
+
+## The Log-Rank Test
+
+The **log-rank test** (Mantel–Cox, 1966) is the standard non-parametric test for comparing two or more survival curves. It is most powerful under the proportional hazards alternative.
+
+### Two-Sample Log-Rank
+
+At each observed event time $t_j$, construct a $2 \times 2$ table:
+
+|  | Events | Non-events | Total |
+|--|--------|-----------|-------|
+| Group 1 | $O_{1j}$ | $n_{1j}-O_{1j}$ | $n_{1j}$ |
+| Group 2 | $O_{2j}$ | $n_{2j}-O_{2j}$ | $n_{2j}$ |
+| Total | $d_j$ | $n_j - d_j$ | $n_j$ |
+
+**Expected events in group 1** at $t_j$: $E_{1j} = d_j \cdot n_{1j}/n_j$
+
+**Test statistic:**
+
+$$U = \sum_j (O_{1j} - E_{1j}), \qquad V = \sum_j \frac{n_{1j} n_{2j} d_j (n_j - d_j)}{n_j^2 (n_j - 1)}$$
+
+$$\chi^2_{LR} = U^2 / V \sim \chi^2_1 \quad \text{under } H_0: S_1(t) = S_2(t)$$
+
+### Mantel–Haenszel Form
+
+The Mantel–Haenszel statistic is equivalent to the log-rank test:
+
+$$\chi^2_{MH} = \frac{[\sum_j(O_{1j} - E_{1j})]^2}{\sum_j V_j}$$
+
+## Weighted Tests
+
+The general weighted log-rank statistic is:
+
+$$\chi^2_w = \frac{[\sum_j w_j(O_{1j}-E_{1j})]^2}{\sum_j w_j^2 V_j}$$
+
+| Test | Weights $w_j$ | Most powerful against |
+|------|-------------|----------------------|
+| Log-rank (Mantel-Cox) | $1$ | Proportional hazards |
+| Wilcoxon (Breslow–Gehan) | $n_j$ | Early differences |
+| Tarone–Ware | $\sqrt{n_j}$ | Intermediate |
+| Fleming–Harrington($\rho$) | $[\hat{S}(t_j^-)]^\rho$ | Late differences ($\rho=1$) |
+
+```{r}
+#| label: logrank-tests
+
+# Log-rank (rho = 0)
+lr  <- survdiff(Surv(time, status==2) ~ sex, data = lung, rho = 0)
+# Wilcoxon / Breslow (rho = 1)
+wb  <- survdiff(Surv(time, status==2) ~ sex, data = lung, rho = 1)
+
+cat("=== Log-Rank Test ===\n"); print(lr)
+cat("\n=== Wilcoxon (Breslow) Test ===\n"); print(wb)
+```
+
+## k-Sample Test
+
+For $k > 2$ groups, the generalised Mantel–Haenszel statistic:
+
+$$\chi^2 = \mathbf{U}^T \hat{\boldsymbol{\Sigma}}^{-1} \mathbf{U} \sim \chi^2_{k-1}$$
+
+```{r}
+#| label: ksample-test
+
+lr_ecog <- survdiff(Surv(time, status==2) ~ ph.ecog, data = lung)
+print(lr_ecog)
+```
+
+```{r}
+#| label: fig-km-ecog
+#| fig-cap: "KM curves by ECOG performance status with log-rank p-value"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 7
+
+lung2 <- lung |> filter(!is.na(ph.ecog))
+km_ecog <- survfit(Surv(time, status==2) ~ ph.ecog, data = lung2)
+
+ggsurvplot(km_ecog,
+           data        = lung2,
+           pval        = TRUE,
+           pval.method = TRUE,
+           conf.int    = FALSE,
+           risk.table  = TRUE,
+           legend.labs = paste("ECOG", sort(unique(lung2$ph.ecog))),
+           palette     = c("#2C7BB6","#1A9641","#D7191C","#FF7F00"),
+           xlab        = "Time (days)", ylab = "S(t)",
+           title       = "Survival by ECOG Performance Status",
+           ggtheme     = theme_bw(base_size = 13))
+```
+
+## Comparison of Two Life Tables
+
+For two independent cohorts with complete mortality data, we test $H_0: q_{1x} = q_{2x}$ at each age $x$ using the normal approximation for proportions.
+
+::: {.callout-note title="Choice of Test"}
+Use the **log-rank test** when you expect proportional hazards (constant hazard ratio over time). Use **Wilcoxon** when group differences are largest early in follow-up. If curves cross (non-proportional hazards), no single weighted log-rank test is uniformly powerful — consider max-combo tests or the restricted mean survival time approach.
+:::
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"Errors using inadequate data are much less than those using no data at all."*\
+**— Charles Babbage**
+:::

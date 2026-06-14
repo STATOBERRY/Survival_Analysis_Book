@@ -1,0 +1,24 @@
+# Preface {.unnumbered}
+
+Survival analysis occupies a unique place in the statistical sciences. Unlike most areas of statistics where we model what is measured, survival analysis begins by confronting what is *not* measured — the event times of subjects who are still alive, still healthy, or still functioning when the study ends. This incompleteness, called censoring, is not a deficiency of the data but a fundamental feature of time-to-event studies, and handling it correctly is the central challenge the subject addresses.
+
+These lecture notes grew out of courses taught to graduate students in Agricultural Statistics at the College of Agriculture, Vellayani. For years I felt the need for a treatment that was rigorous enough for Ph.D. students yet connected constantly to the intuition and to practical implementation. Existing texts are either too mathematical — dwelling on measure-theoretic counting-process theory before the student has seen a single Kaplan–Meier curve — or too applied, presenting the `coxph()` function without explaining *why* a partial likelihood is needed. This book attempts a middle path.
+
+The treatment here is driven by three convictions:
+
+1.  **The hazard function is the right language.** Every major concept — survival functions, parametric families, the log-rank test, the Cox model, competing risks — becomes cleaner and more unified when stated in terms of the hazard. We introduce the hazard early and return to it constantly.
+
+2.  **Computation and theory must be interleaved.** Students learn survival analysis by fitting models, not by reading about them. Every theoretical concept in this book is immediately followed by an R implementation on a real dataset. The `survival` and `survminer` packages are used throughout; `flexsurv` is introduced for parametric families; `deSolve` supports the epidemic models in Unit V.
+
+3.  **Agricultural applications are not afterthoughts.** Examples are drawn from crop science, veterinary medicine, entomology, epidemiology, and demography — the fields where Ph.D. students in Agricultural Statistics will actually work.
+
+The book covers the complete STAT 607 syllabus as approved by the Academic Council of Kerala Agricultural University. Unit I builds the vocabulary: hazard functions, survival distributions, censoring mechanisms, and life tables. Unit II develops non-parametric estimation — the Kaplan–Meier and Nelson–Aalen estimators. Unit III turns to parametric families and the tools for choosing among them and for comparing groups. Unit IV introduces regression through the Cox proportional hazards model and its diagnostics. Unit V addresses three advanced topics that are increasingly important in agricultural and public-health research: interval censoring, competing risks, and stochastic epidemic models.
+
+I am grateful to students of the Ph.D. programme in Agricultural Statistics whose questions sharpened every explanation here. Errors that remain are my own.
+
+**Dr. Pratheesh P. Gopinath**\
+Assistant Professor and Head\
+Department of Agricultural Statistics\
+College of Agriculture, Vellayani\
+Kerala Agricultural University\
+2025

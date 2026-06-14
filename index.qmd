@@ -1,0 +1,39 @@
+# Welcome {.unnumbered}
+
+Welcome to *Survival Analysis: Theory, Methods and R Implementation for Agricultural Research* — a graduate-level course resource prepared for students of the **Ph.D. programme in Agricultural Statistics** at the College of Agriculture, Vellayani, Kerala Agricultural University.
+
+Survival analysis is the branch of statistics dedicated to analysing the **time until an event of interest** — be it death, disease onset, pest infestation, crop failure, or maturation. It is an indispensable tool in agricultural research, veterinary science, plant pathology, and epidemiology, yet it is frequently treated as a peripheral topic in standard statistics curricula.
+
+This book fills that gap. It provides a complete, self-contained treatment of survival analysis from first principles through to advanced regression methods and epidemic modelling, with every concept illustrated through **working R code** that you can run and adapt immediately.
+
+As David Cox wrote, *"The hazard function, perhaps more than any other, is the key to understanding the dynamics of failure."* We build our treatment around this insight — every chapter returns to the hazard function as the unifying concept that ties together mortality tables, the Kaplan–Meier estimator, parametric models, and the celebrated Cox proportional hazards model.
+
+::: {.callout-note title="How This Book Is Organised"}
+The book follows the **STAT 607 syllabus** of the Ph.D. programme in Agricultural Statistics, KAU, organised into five units:
+
+-   **Unit I** — Measures of mortality and morbidity, survival distributions, censoring, and life tables
+-   **Unit II** — Estimation of the survival function (Kaplan–Meier, actuarial, Nelson–Aalen)
+-   **Unit III** — Parametric models, goodness-of-fit, and comparison of mortality experiences
+-   **Unit IV** — Concomitant variables, Cox regression, and hazard modelling
+-   **Unit V** — Interval censoring, competing risks, and stochastic epidemic models
+:::
+
+### Who Should Read This Book
+
+This resource is intended primarily for Ph.D. students in Agricultural Statistics, Biostatistics, and related fields. It assumes familiarity with mathematical statistics at the M.Sc. level — including distribution theory, maximum likelihood estimation, and regression — but reviews key concepts as needed.
+
+Researchers in plant sciences, animal breeding, public health, and environmental studies will also find it a practical reference for applying survival methods to their own data.
+
+### Software
+
+All examples are implemented in **R**, using the packages `survival`, `survminer`, `flexsurv`, `km.ci`, and `deSolve`. Required packages are installed automatically at the start of each chapter. Code is shown in full so that results can be reproduced exactly.
+
+### Acknowledgements
+
+The syllabus and course structure follow the approved Ph.D. programme in Agricultural Statistics at Kerala Agricultural University (Order No. KAUEDU/1742/2024, dated 07-04-2025). The author thanks colleagues in the Department of Agricultural Statistics, College of Agriculture, Vellayani, for discussions that shaped the content of these notes.
+
+### Copyright Information
+
+© 2025 **Dr. Pratheesh P. Gopinath**, Department of Agricultural Statistics, College of Agriculture, Vellayani, Kerala Agricultural University.
+
+This material is made available for educational use within KAU. Reproduction or redistribution without written permission is not permitted.

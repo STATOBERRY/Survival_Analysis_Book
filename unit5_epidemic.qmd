@@ -1,0 +1,180 @@
+# Stochastic Epidemic Models
+
+Epidemic models describe the spread of disease through a population over time. They sit at the intersection of survival analysis, stochastic processes, and differential equations. In agricultural contexts, they model the spread of crop diseases, pest infestations, and livestock infections.
+
+```{r}
+#| label: setup-epi
+#| echo: false
+pkgs <- c("deSolve","ggplot2","dplyr","knitr","kableExtra","tidyr")
+new_pkgs <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
+if (length(new_pkgs)) install.packages(new_pkgs, repos = "https://cloud.r-project.org")
+suppressPackageStartupMessages({
+  library(deSolve); library(ggplot2); library(dplyr)
+  library(knitr); library(kableExtra); library(tidyr)
+})
+theme_set(theme_bw(base_size = 13))
+```
+
+## Simple Epidemic (SI Model)
+
+The simplest epidemic model has two compartments: **Susceptible** ($S$) and **Infectious** ($I$). Population size $N = S + I$ is fixed.
+
+$$\frac{dS}{dt} = -\beta SI, \qquad \frac{dI}{dt} = \beta SI$$
+
+Solution (logistic growth):
+
+$$I(t) = \frac{N I_0 e^{\beta N t}}{N - I_0 + I_0 e^{\beta N t}} = \frac{N}{1 + \left(\frac{N - I_0}{I_0}\right) e^{-\beta N t}}$$
+
+## General Epidemic: The SIR Model
+
+Adding a **Removed** ($R$) compartment (recovered or dead, immune):
+
+$$\frac{dS}{dt} = -\beta SI, \qquad \frac{dI}{dt} = \beta SI - \gamma I, \qquad \frac{dR}{dt} = \gamma I$$
+
+Parameters:
+- $\beta$ = transmission rate (contact rate × probability of transmission per contact)
+- $\gamma$ = removal rate (recovery + death rate)
+- $1/\gamma$ = mean infectious period
+
+### Kermack–McKendrick Threshold Theorem
+
+An epidemic (increasing $I$) occurs if and only if:
+
+$$S(0) > \frac{\gamma}{\beta} \equiv \rho \quad \text{(threshold density)}$$
+
+Equivalently, defining the **Basic Reproduction Number**:
+
+$$R_0 = \frac{\beta S(0)}{\gamma}$$
+
+An epidemic spreads ($I$ initially increases) if and only if $R_0 > 1$.
+
+**Final size**: The fraction $r_\infty$ ultimately infected satisfies $1 - r_\infty = e^{-R_0 r_\infty}$ (transcendental equation, solved numerically).
+
+```{r}
+#| label: fig-sir
+#| fig-cap: "SIR model dynamics for different R₀ values"
+#| fig-align: center
+#| fig-width: 10
+#| fig-height: 6
+
+sir_ode <- function(time, state, parms) {
+  with(as.list(c(state, parms)), {
+    list(c(-beta*S*I, beta*S*I - gamma*I, gamma*I))
+  })
+}
+
+times <- seq(0, 300, by = 0.5)
+N <- 10000; I0 <- 10
+gamma <- 0.1
+
+results <- lapply(c(0.5, 1.5, 2.5, 4.0), function(r0) {
+  beta <- r0 * gamma / (N - I0)
+  sol  <- ode(y = c(S = N-I0, I = I0, R = 0),
+              times = times, func = sir_ode,
+              parms = c(beta=beta, gamma=gamma))
+  as.data.frame(sol) |>
+    mutate(R0 = paste0("R₀ = ", r0), across(S:R, \(x) x/N))
+})
+
+sir_df <- bind_rows(results) |>
+  pivot_longer(S:R, names_to = "Compartment", values_to = "Proportion")
+
+ggplot(sir_df, aes(x = time, y = Proportion,
+                    colour = Compartment, linetype = Compartment)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~R0, ncol = 2) +
+  scale_colour_manual(values = c(S="#2C7BB6", I="#D7191C", R="#1A9641")) +
+  scale_linetype_manual(values = c(S="solid", I="solid", R="dashed")) +
+  labs(title = "SIR Epidemic Model: Effect of Basic Reproduction Number R₀",
+       x = "Time (days)", y = "Proportion of Population",
+       colour = "Compartment", linetype = "Compartment") +
+  theme(legend.position = "bottom",
+        strip.background = element_rect(fill = "#EAF4FB"),
+        strip.text = element_text(face = "bold"))
+```
+
+## Recurrent Epidemics: The SIRS Model
+
+If immunity wanes at rate $\delta$, recovered individuals re-enter the susceptible pool:
+
+$$\frac{dS}{dt} = -\beta SI + \delta R, \qquad \frac{dI}{dt} = \beta SI - \gamma I, \qquad \frac{dR}{dt} = \gamma I - \delta R$$
+
+This can produce **oscillatory dynamics** (recurrent epidemic waves) — relevant for modelling seasonal crop diseases.
+
+```{r}
+#| label: fig-sirs
+#| fig-cap: "SIRS model with waning immunity showing recurrent epidemic waves"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 4
+
+sirs_ode <- function(time, state, parms) {
+  with(as.list(c(state, parms)), {
+    list(c(-beta*S*I + delta*R, beta*S*I - gamma*I, gamma*I - delta*R))
+  })
+}
+
+sol_sirs <- ode(
+  y = c(S = 9990, I = 10, R = 0),
+  times = seq(0, 2000, by = 1),
+  func = sirs_ode,
+  parms = c(beta = 0.0003, gamma = 0.1, delta = 0.005)
+)
+sirs_df <- as.data.frame(sol_sirs) |>
+  mutate(across(S:R, \(x) x/10000)) |>
+  pivot_longer(S:R, names_to = "Compartment", values_to = "Proportion")
+
+ggplot(sirs_df, aes(x = time, y = Proportion, colour = Compartment)) +
+  geom_line(linewidth = 0.9) +
+  scale_colour_manual(values = c(S="#2C7BB6", I="#D7191C", R="#1A9641")) +
+  labs(title = "SIRS Model: Recurrent Epidemic Waves (Waning Immunity)",
+       x = "Time (days)", y = "Proportion of Population",
+       colour = NULL) +
+  theme(legend.position = "bottom")
+```
+
+## Stochastic SIR Simulation
+
+Deterministic ODEs describe the *average* epidemic trajectory. In small populations, **stochasticity** matters: some epidemics die out before taking hold even when $R_0 > 1$.
+
+The **Gillespie algorithm** simulates the exact stochastic process:
+
+```{r}
+#| label: fig-stochastic-sir
+#| fig-cap: "20 stochastic SIR realisations (Gillespie algorithm): variability around the deterministic mean"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 4
+
+stoch_sir <- function(N=1000, I0=5, beta=0.0003, gamma=0.1, tmax=300) {
+  S <- N-I0; I <- I0; R <- 0; t <- 0
+  times <- I_t <- t
+  while (t < tmax && I > 0) {
+    r_inf <- beta*S*I; r_rec <- gamma*I; r_tot <- r_inf+r_rec
+    if (r_tot == 0) break
+    t <- t + rexp(1, r_tot)
+    if (runif(1) < r_inf/r_tot) { S <- S-1; I <- I+1 } else { I <- I-1; R <- R+1 }
+    times <- c(times, t); I_t <- c(I_t, I)
+  }
+  data.frame(time = times, I = I_t)
+}
+
+set.seed(2025)
+sims <- lapply(1:20, function(i) stoch_sir() |> mutate(sim = i))
+sims_df <- bind_rows(sims)
+
+ggplot(sims_df, aes(x = time, y = I/1000, group = sim, colour = factor(sim))) +
+  geom_line(alpha = 0.5, linewidth = 0.6) +
+  labs(title = "Stochastic SIR: 20 Gillespie Realisations (N=1000, R₀≈3)",
+       x = "Time (days)", y = "Proportion Infectious") +
+  theme(legend.position = "none")
+```
+
+::: {.callout-caution title="Historical Insights"}
+**William Ogilvy Kermack (1898–1970)** and **Anderson Gray McKendrick (1876–1943)** published their epidemic threshold theorem in 1927. McKendrick was an Indian Medical Service officer who studied mathematical models of epidemics while stationed in India; Kermack was a Scottish biochemist who became blind following a laboratory accident in 1924 yet continued his scientific career. Their 1927 paper is considered the founding document of mathematical epidemiology.
+:::
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"An approximate answer to the right question is worth a great deal more than a precise answer to the wrong question."*\
+**— John W. Tukey**
+:::

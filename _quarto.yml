@@ -1,0 +1,70 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "SURVIVAL ANALYSIS"
+  subtitle: "Theory, Methods and R Implementation for Agricultural Research"
+  author:
+    - Dr. Pratheesh P. Gopinath
+  date: today
+  reader-mode: true
+  page-navigation: true
+  back-to-top-navigation: true
+  search: true
+  chapters:
+    - index.qmd
+    - preface.qmd
+    - part: "UNIT I: Foundations"
+      chapters:
+        - unit1_mortality.qmd
+        - unit1_distributions.qmd
+        - unit1_censoring.qmd
+        - unit1_lifetable.qmd
+    - part: "UNIT II: Estimating Survival"
+      chapters:
+        - unit2_km.qmd
+        - unit2_actuarial.qmd
+        - unit2_nelsona.qmd
+    - part: "UNIT III: Parametric Models & Comparisons"
+      chapters:
+        - unit3_parametric.qmd
+        - unit3_gof.qmd
+        - unit3_comparison.qmd
+    - part: "UNIT IV: Regression Models"
+      chapters:
+        - unit4_cox.qmd
+        - unit4_covariates.qmd
+    - part: "UNIT V: Advanced Topics"
+      chapters:
+        - unit5_interval.qmd
+        - unit5_competing.qmd
+        - unit5_epidemic.qmd
+    - references.qmd
+
+bibliography: book.bib
+
+format:
+  html:
+    mainfont: Georgia
+    monofont: Fira Code
+    highlight-style: arrow
+    number-sections: true
+    monobackgroundcolor: "#F7F7F7"
+    math: mathjax
+    theme:
+      light:
+        - lumen
+        - theme.scss
+      dark:
+        - slate
+        - darktheme.scss
+
+execute:
+  echo: true
+  warning: false
+  message: false
+  cache: false
+
+number-depth: 3
+editor: visual

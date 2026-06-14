@@ -1,0 +1,161 @@
+# Concomitant Variables and Model Building
+
+Selecting and interpreting covariate effects is as important as fitting the model. This chapter covers additive and multiplicative hazard models, age-of-onset distributions, and strategies for covariate selection in survival models.
+
+```{r}
+#| label: setup-cov
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(survminer); library(ggplot2)
+  library(dplyr); library(knitr); library(kableExtra); library(broom)
+})
+theme_set(theme_bw(base_size = 13))
+data(lung)
+```
+
+## Multiplicative vs Additive Models
+
+### Proportional Hazards (Multiplicative)
+
+$$h(t;\mathbf{x}) = h_0(t) \exp(\boldsymbol{\beta}^T \mathbf{x})$$
+
+Covariates act **multiplicatively** on the hazard. Log hazard ratio is linear in covariates.
+
+### Aalen's Additive Hazard Model
+
+$$h(t;\mathbf{x}) = h_0(t) + \boldsymbol{\beta}(t)^T \mathbf{x}$$
+
+Covariates act **additively** on the hazard. The regression coefficients $\boldsymbol{\beta}(t)$ are time-varying, making this a very flexible model. Useful when the PH assumption fails.
+
+## Selecting Concomitant Variables
+
+### Step 1: Univariable Screening
+
+Fit each covariate separately and flag those with $p < 0.25$ (a liberal threshold used to avoid excluding important predictors):
+
+```{r}
+#| label: tbl-univar
+#| tbl-cap: "Univariable Cox models for covariate screening"
+
+covs <- c("age","sex","ph.ecog","ph.karno","wt.loss")
+uni_results <- lapply(covs, function(v) {
+  fml <- as.formula(paste("Surv(time, status==2) ~", v))
+  fit <- coxph(fml, data = lung)
+  tidy(fit, exponentiate = TRUE, conf.int = TRUE) |>
+    select(term, estimate, conf.low, conf.high, p.value) |>
+    mutate(across(where(is.numeric), \(x) round(x,3)))
+})
+bind_rows(uni_results) |>
+  kbl(col.names = c("Covariate","HR","Lower 95%","Upper 95%","p-value"),
+      align = "lcccc") |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center")
+```
+
+### Step 2: Multivariable Model with Stepwise Selection
+
+```{r}
+#| label: stepwise-cox
+
+vars <- c("time","status","age","sex",
+          "ph.ecog","ph.karno","wt.loss")
+
+lung_cc <- lung[complete.cases(lung[, vars]), vars]
+
+cox_full <- coxph(
+  Surv(time, status == 2) ~ age + sex + ph.ecog +
+    ph.karno + wt.loss,
+  data = lung_cc
+)
+
+cox_step <- step(cox_full, direction = "both", trace = 0)
+
+summary(cox_step)
+```
+
+### Step 3: Model Diagnostics
+
+**Cox–Snell residuals** assess overall fit; **Martingale residuals** check functional form; **Deviance residuals** identify influential observations.
+
+```{r}
+#| label: fig-residuals
+#| fig-cap: "Martingale residuals vs covariates to assess functional form"
+#| fig-align: center
+#| fig-width: 10
+#| fig-height: 4
+
+# Null model residuals for functional form assessment
+cox_null <- coxph(Surv(time, status==2) ~ 1, data = lung)
+mart_res  <- residuals(cox_null, type = "martingale")
+lung_r    <- lung |> mutate(mart = mart_res)
+
+p1 <- ggplot(lung_r, aes(x = age, y = mart)) +
+  geom_point(alpha = 0.4, colour = "#2C7BB6") +
+  geom_smooth(method = "loess", se = TRUE, colour = "#D7191C") +
+  labs(title = "Age", x = "Age (years)", y = "Martingale Residual")
+
+p2 <- ggplot(lung_r, aes(x = ph.karno, y = mart)) +
+  geom_point(alpha = 0.4, colour = "#2C7BB6") +
+  geom_smooth(method = "loess", se = TRUE, colour = "#D7191C") +
+  labs(title = "Karnofsky Score", x = "Karnofsky", y = "Martingale Residual")
+
+library(patchwork)
+p1 + p2
+```
+
+## Logistic Regression for Fixed-Time Survival
+
+When interest lies in survival to a **specific time point** $t_0$ (e.g., one year), logistic regression is appropriate:
+
+$$\text{logit}[P(T \leq t_0 \mid \mathbf{x})] = \alpha + \boldsymbol{\beta}^T\mathbf{x}$$
+
+```{r}
+#| label: logistic-surv
+
+lung_lr <- lung |>
+  mutate(dead_1yr = as.integer(status == 2 & time <= 365))
+
+logit_fit <- glm(
+  dead_1yr ~ age + factor(sex) + ph.ecog,
+  data = lung_lr,
+  family = binomial
+)
+
+tidy(logit_fit, exponentiate = TRUE, conf.int = TRUE) |>
+  select(term, estimate, conf.low, conf.high, statistic, p.value) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  kbl(
+    col.names = c(
+      "Covariate",
+      "OR",
+      "Lower 95%",
+      "Upper 95%",
+      "z",
+      "p-value"
+    ),
+    caption = "Logistic regression: odds ratios for 1-year mortality",
+    align = "lccccc"
+  ) |>
+  kable_styling(
+    bootstrap_options = c("striped", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+```
+
+## Age-of-Onset Distributions
+
+For diseases where the event is disease onset rather than death, we model:
+
+$$S(t) = P(\text{onset age} > t)$$
+
+A **parallel-system** model assumes $k$ susceptibility components must all "fail" for onset to occur:
+
+$$S(t) = [S_1(t)]^k$$
+
+If $S_1(t) = e^{-\lambda t}$ (exponential), then $S(t) = e^{-k\lambda t}$ — still exponential but with rate $k\lambda$. With Weibull components, the parallel model produces a Weibull mixture.
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"It is easy to lie with statistics. It is hard to tell the truth without statistics."*\
+**— Andrejs Dunkels**
+:::

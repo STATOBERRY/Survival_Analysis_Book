@@ -1,0 +1,60 @@
+/*-- scss:defaults --*/
+
+$primary: #2C7BB6;
+$link-color: #2C7BB6;
+$sidebar-hl: #D7191C;
+$toc-active-border: #2C7BB6;
+$toc-active-background: #EAF4FB;
+$activecolour: #1a5276;
+
+.sidebar-title {
+  color: $primary;
+  font-weight: bold;
+}
+
+div.sidebar-item-container .active {
+  font-weight: bold;
+  color: $sidebar-hl;
+}
+
+.sidebar nav[role=doc-toc] ul > li > a.active,
+.sidebar nav[role=doc-toc] ul > li > ul > li > a.active {
+  font-weight: bold;
+  color: $activecolour;
+  background-color: $toc-active-background;
+  border-left: 4px solid $primary;
+}
+
+img.quarto-cover-image {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+}
+
+.sidebar-navigation a:hover {
+  color: $sidebar-hl !important;
+}
+
+.nav-link.active {
+  background-color: $toc-active-background !important;
+  color: $activecolour !important;
+}
+
+.footnotes {
+  font-size: 0.9rem;
+}
+
+.card {
+  border: 1px solid $primary;
+  border-radius: 8px;
+  box-shadow: 0px 2px 8px rgba(0,0,0,0.12);
+}
+
+.highlight {
+  border-left: 4px solid $primary;
+  padding: 1rem;
+  border-radius: 4px;
+  background-color: #f0f7ff;
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar-title { font-size: 1.2rem; }
+}

@@ -1,0 +1,101 @@
+# Actuarial Method for Grouped Data
+
+When survival data arrive in grouped form — counts of deaths and withdrawals in successive time intervals — the **actuarial (life table) method** provides a computationally straightforward non-parametric estimate of $S(t)$. It predates the Kaplan–Meier estimator by decades and underpins traditional demographic and insurance calculations.
+
+```{r}
+#| label: setup-act
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(ggplot2); library(dplyr)
+  library(knitr); library(kableExtra)
+})
+theme_set(theme_bw(base_size = 13))
+```
+
+## The Actuarial Estimator
+
+Within each interval $[t_j, t_{j+1})$, denote:
+
+- $l_j$ = number entering the interval
+- $d_j$ = number dying (events) in the interval
+- $c_j$ = number censored (withdrawn) in the interval
+
+Assuming censoring occurs **at the midpoint** of the interval (the standard actuarial assumption):
+
+$$\hat{q}_j = \frac{d_j}{l_j - c_j/2}, \qquad \hat{p}_j = 1 - \hat{q}_j$$
+
+The estimated survival function at the end of interval $j$ is:
+
+$$\hat{S}(t_j) = \prod_{u=1}^{j} \hat{p}_u$$
+
+### Variance (Greenwood-type)
+
+$$\widehat{\text{Var}}[\hat{S}(t_j)] = [\hat{S}(t_j)]^2 \sum_{u=1}^{j} \frac{\hat{q}_u}{\hat{p}_u (l_u - c_u/2)}$$
+
+```{r}
+#| label: tbl-actuarial
+#| tbl-cap: "Actuarial life table estimation for grouped survival data"
+
+act <- data.frame(
+  Interval = c("[0,6)","[6,12)","[12,18)","[18,24)","[24,30)","[30,36)"),
+  l_j  = c(250, 210, 174, 138, 106, 78),
+  d_j  = c(28,  24,  28,  24,  20,  16),
+  c_j  = c(12,  12,  8,   8,   8,   62)   # final interval: remaining censored
+)
+
+act <- act |>
+  mutate(
+    eff_n = l_j - c_j / 2,
+    q_hat = d_j / eff_n,
+    p_hat = 1 - q_hat,
+    S_hat = cumprod(p_hat),
+    gw_term = q_hat / (p_hat * eff_n),
+    var_S = S_hat^2 * cumsum(gw_term),
+    se_S  = sqrt(var_S),
+    CI_lo = pmax(0, S_hat - 1.96 * se_S),
+    CI_hi = pmin(1, S_hat + 1.96 * se_S)
+  )
+
+act |>
+  mutate(across(c(eff_n,q_hat,p_hat,S_hat,se_S,CI_lo,CI_hi),
+                \(x) round(x,3))) |>
+  select(Interval,l_j,d_j,c_j,eff_n,q_hat,p_hat,S_hat,se_S,CI_lo,CI_hi) |>
+  kbl(col.names = c("Interval","l_j","d_j","c_j","l_j - c_j/2",
+                    "q̂_j","p̂_j","Ŝ(t)","SE","Lo 95%","Hi 95%"),
+      align = "c") |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center", font_size = 11)
+```
+
+```{r}
+#| label: fig-actuarial
+#| fig-cap: "Actuarial survival estimate with 95% pointwise confidence band"
+#| fig-align: center
+#| fig-width: 8
+#| fig-height: 4
+
+# Midpoints for plotting
+act$t_mid <- c(0,6,12,18,24,30)
+
+ggplot(act, aes(x = t_mid, y = S_hat)) +
+  geom_step(colour = "#2C7BB6", linewidth = 1.3) +
+  geom_ribbon(aes(ymin = CI_lo, ymax = CI_hi), alpha = 0.15, fill = "#2C7BB6") +
+  geom_point(colour = "#D7191C", size = 2.5) +
+  scale_y_continuous(labels = scales::percent, limits = c(0,1)) +
+  labs(title = "Actuarial Survival Estimate",
+       x = "Time (months)", y = "Survival Probability Ŝ(t)")
+```
+
+## Comparison: Actuarial vs Kaplan–Meier
+
+| Feature | Actuarial | Kaplan–Meier |
+|---------|-----------|--------------|
+| Data format | Grouped (interval counts) | Individual (exact times) |
+| Censoring assumption | Midpoint of interval | Exact time known |
+| When useful | Large datasets, register data | Clinical/experimental studies |
+| Consistency | Yes | Yes |
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"Facts are stubborn things, but statistics are pliable."*\
+**— Mark Twain**
+:::

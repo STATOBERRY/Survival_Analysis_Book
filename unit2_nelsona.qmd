@@ -1,0 +1,120 @@
+# The Nelson–Aalen Estimator
+
+The **Nelson–Aalen (NA) estimator** is a non-parametric estimator of the **cumulative hazard function** $H(t)$. Proposed by Wayne Nelson (1972) for reliability data and later formalised by Odd Aalen (1978) using counting-process theory, it provides an alternative to the Kaplan–Meier approach that is particularly useful in small samples and as a diagnostic tool.
+
+```{r}
+#| label: setup-na
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(survminer); library(ggplot2)
+  library(dplyr); library(knitr); library(kableExtra)
+})
+theme_set(theme_bw(base_size = 13))
+data(lung)
+lung$SurvObj <- Surv(lung$time, lung$status == 2)
+```
+
+## The Estimator
+
+At each observed event time $t_j$ with $d_j$ events and $n_j$ subjects at risk:
+
+$$\hat{H}(t) = \sum_{t_j \leq t} \frac{d_j}{n_j}$$
+
+The corresponding survival estimate is then:
+
+$$\tilde{S}(t) = \exp\{-\hat{H}(t)\}$$
+
+This is sometimes called the **Fleming–Harrington estimator** in the survival package.
+
+### Variance
+
+$$\widehat{\text{Var}}[\hat{H}(t)] = \sum_{t_j \leq t} \frac{d_j}{n_j^2}$$
+
+## Manual Calculation
+
+```{r}
+#| label: tbl-na-manual
+#| tbl-cap: "Manual Nelson–Aalen calculation"
+
+times  <- c(1, 2, 3, 3, 4, 5, 7, 8, 8, 10, 12, 14)
+events <- c(1, 1, 1, 0, 1, 0, 1, 1, 0,  1,  0,  1)
+uniq_et <- unique(sort(times[events == 1]))
+
+na_tbl <- data.frame(t_j = uniq_et)
+na_tbl$n_j  <- sapply(na_tbl$t_j, \(x) sum(times >= x))
+na_tbl$d_j  <- sapply(na_tbl$t_j, \(x) sum(times == x & events == 1))
+na_tbl$incr <- na_tbl$d_j / na_tbl$n_j
+na_tbl$H_t  <- cumsum(na_tbl$incr)
+na_tbl$S_tilde <- exp(-na_tbl$H_t)
+na_tbl$var_H   <- cumsum(na_tbl$d_j / na_tbl$n_j^2)
+
+na_tbl |>
+  mutate(across(where(is.numeric), \(x) round(x, 4))) |>
+  kbl(col.names = c("t_j","n_j","d_j","d_j/n_j","Ĥ(t)","exp{-Ĥ(t)}","Var[Ĥ(t)]"),
+      align = "c") |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center")
+```
+
+## Nelson–Aalen in R
+
+```{r}
+#| label: fig-na-lung
+#| fig-cap: "Nelson–Aalen cumulative hazard estimate with confidence band"
+#| fig-align: center
+#| fig-width: 8
+#| fig-height: 4
+
+na_fit <- survfit(SurvObj ~ 1, data = lung, type = "fh")  # Fleming-Harrington
+
+na_df <- data.frame(
+  time   = na_fit$time,
+  cumhaz = na_fit$cumhaz,
+  lo     = na_fit$cumhaz - 1.96 * sqrt(na_fit$cumhaz / na_fit$n.risk),
+  hi     = na_fit$cumhaz + 1.96 * sqrt(na_fit$cumhaz / na_fit$n.risk)
+)
+
+ggplot(na_df, aes(x = time, y = cumhaz)) +
+  geom_step(colour = "#2C7BB6", linewidth = 1.2) +
+  geom_ribbon(aes(ymin = pmax(0, lo), ymax = hi),
+              fill = "#2C7BB6", alpha = 0.15) +
+  labs(title = "Nelson–Aalen Cumulative Hazard Estimate",
+       subtitle = "NCCTG Lung Cancer Data",
+       x = "Time (days)", y = expression(hat(H)(t)))
+```
+
+## KM vs Nelson–Aalen: Which to Use?
+
+```{r}
+#| label: fig-km-vs-na
+#| fig-cap: "KM and Nelson–Aalen survival estimates: differences emerge in small samples"
+#| fig-align: center
+#| fig-width: 8
+#| fig-height: 4
+
+km_fit  <- survfit(SurvObj ~ 1, data = lung)
+na_surv <- exp(-na_fit$cumhaz)
+
+df_comp <- bind_rows(
+  data.frame(time = km_fit$time, surv = km_fit$surv, Method = "Kaplan–Meier"),
+  data.frame(time = na_fit$time, surv = na_surv,      Method = "Nelson–Aalen")
+)
+
+ggplot(df_comp, aes(x = time, y = surv, colour = Method)) +
+  geom_step(linewidth = 1.1) +
+  scale_colour_manual(values = c("Kaplan–Meier" = "#2C7BB6",
+                                 "Nelson–Aalen" = "#D7191C")) +
+  labs(title = "KM vs Nelson–Aalen Survival Estimates",
+       x = "Time (days)", y = "S(t)",
+       colour = NULL) +
+  theme(legend.position = "bottom")
+```
+
+::: {.callout-note title="When to Prefer Nelson–Aalen"}
+The NA estimator is slightly **less biased** than KM in small samples (KM can be zero if the last observation is an event; NA never reaches zero). In practice, both give very similar results for large samples. The NA estimator is the natural output when cumulative hazards are of primary interest — e.g., when checking proportional hazards.
+:::
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"Without data, you're just another person with an opinion."*\
+**— W. Edwards Deming**
+:::

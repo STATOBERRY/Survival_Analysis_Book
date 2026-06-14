@@ -1,0 +1,98 @@
+# Goodness-of-Fit Tests
+
+After selecting and fitting a parametric model, we must assess whether it adequately describes the data. This chapter presents graphical and formal statistical tests for goodness-of-fit.
+
+```{r}
+#| label: setup-gof
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(flexsurv); library(ggplot2)
+  library(dplyr); library(knitr); library(kableExtra)
+})
+theme_set(theme_bw(base_size = 13))
+data(lung)
+fit_weib <- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = "weibull")
+km_fit   <- survfit(Surv(time, status==2) ~ 1, data = lung)
+```
+
+## Graphical Assessment: PP and QQ Plots
+
+### Probability–Probability (PP) Plot
+
+Plot empirical $\hat{F}(t_j)$ vs fitted $F(t_j;\hat{\theta})$. Perfect fit: points on the diagonal.
+
+### Quantile–Quantile (QQ) Plot
+
+Plot empirical quantiles vs fitted quantiles. Deviations reveal systematic misfit.
+
+```{r}
+#| label: fig-pp-plot
+#| fig-cap: "PP plot: Weibull fit vs empirical CDF (lung data)"
+#| fig-align: center
+#| fig-width: 7
+#| fig-height: 5
+
+km_F <- 1 - km_fit$surv
+t_km <- km_fit$time
+
+shape_est <- exp(fit_weib$coefficients["shape"])
+scale_est <- exp(fit_weib$coefficients["scale"])
+weib_F    <- pweibull(t_km, shape = shape_est, scale = scale_est)
+
+ggplot(data.frame(Fitted = weib_F, Empirical = km_F),
+       aes(x = Fitted, y = Empirical)) +
+  geom_point(colour = "#2C7BB6", alpha = 0.6, size = 1.5) +
+  geom_abline(slope = 1, intercept = 0, colour = "#D7191C",
+              linetype = "dashed", linewidth = 1) +
+  labs(title = "Probability–Probability Plot: Weibull Fit",
+       x = "Fitted F(t;  θ̂)", y = "Empirical F̂(t)")
+```
+
+## Kolmogorov–Smirnov Statistic
+
+$$D_n = \sup_t |\hat{F}(t) - F(t;\hat{\theta})|$$
+
+For uncensored data, the KS statistic compares the empirical CDF to the fitted CDF. With censored data, a modified statistic is used (Koziol–Green). Under $H_0$ (correct model with parameters estimated from data), critical values differ from the standard KS table — parametric bootstrap is recommended.
+
+## Chi-Square Goodness-of-Fit
+
+Divide the time axis into $k$ intervals. In interval $j$:
+
+$$O_j = \text{observed events}, \qquad E_j = \hat{S}(t_{j-1}) - \hat{S}(t_j) \text{ (fitted)}$$
+
+$$\chi^2 = \sum_{j=1}^k \frac{(O_j - E_j)^2}{E_j} \sim \chi^2_{k-p-1}$$
+
+where $p$ is the number of estimated parameters.
+
+```{r}
+#| label: chisq-gof
+
+# Group failures into intervals
+breaks <- quantile(lung$time[lung$status==2], probs = seq(0,1,by=0.2))
+lung_ev <- lung[lung$status==2,]
+obs_cnt <- hist(lung_ev$time, breaks = breaks, plot = FALSE)$counts
+
+# Expected under Weibull
+exp_prob <- diff(pweibull(breaks, shape=shape_est, scale=scale_est))
+exp_cnt  <- exp_prob * nrow(lung_ev)
+
+chi2 <- sum((obs_cnt - exp_cnt)^2 / exp_cnt)
+df   <- length(obs_cnt) - 1 - 2  # k groups - 1 - 2 estimated params
+
+data.frame(
+  Interval = paste0("[", round(breaks[-length(breaks)]),",",
+                    round(breaks[-1]),")"),
+  Observed = obs_cnt,
+  Expected = round(exp_cnt, 1),
+  Contrib  = round((obs_cnt - exp_cnt)^2 / exp_cnt, 3)
+) |>
+  kbl(caption = sprintf("Chi-square GOF: χ² = %.2f, df = %d, p = %.3f",
+                        chi2, df, pchisq(chi2, df, lower.tail=FALSE))) |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center")
+```
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"In God we trust. All others must bring data."*\
+**— W. Edwards Deming**
+:::

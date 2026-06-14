@@ -1,0 +1,143 @@
+# Fitting Parametric Survival Distributions
+
+Non-parametric estimators like Kaplan–Meier are flexible and assumption-free, but parametric models offer important advantages: smooth hazard estimates, extrapolation beyond the data range, easy computation of mean survival, and a parsimonious description of the data when the model is appropriate. This chapter covers model selection using diagnostic plots, maximum likelihood estimation, and the comparison of parametric families.
+
+```{r}
+#| label: setup-u3param
+#| echo: false
+pkgs <- c("survival","survminer","flexsurv","ggplot2","dplyr","knitr","kableExtra")
+new_pkgs <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
+if (length(new_pkgs)) install.packages(new_pkgs, repos = "https://cloud.r-project.org")
+suppressPackageStartupMessages({
+  library(survival); library(survminer); library(flexsurv)
+  library(ggplot2); library(dplyr); library(knitr); library(kableExtra)
+})
+theme_set(theme_bw(base_size = 13))
+data(lung)
+```
+
+## Diagnostic Plots for Model Selection
+
+Before fitting, visual diagnostics indicate which parametric family is plausible.
+
+### Exponential Check: $\hat{H}(t)$ vs $t$
+
+If $T \sim \text{Exp}(\lambda)$, then $H(t) = \lambda t$ — a straight line through the origin.
+
+### Weibull Check: $\log\hat{H}(t)$ vs $\log t$
+
+$$\log H(t) = \gamma \log t - \gamma \log \lambda$$
+
+A straight line with slope $\gamma$ (the shape parameter).
+
+### Log-Normal Check: $\Phi^{-1}[\hat{F}(t)]$ vs $\log t$
+
+If $\log T \sim N(\mu, \sigma^2)$, plotting $\Phi^{-1}[1 - \hat{S}(t)]$ against $\log t$ gives a straight line with slope $1/\sigma$ and intercept $-\mu/\sigma$.
+
+```{r}
+#| label: fig-chf-plots
+#| fig-cap: "Diagnostic plots for model selection (NCCTG lung cancer data)"
+#| fig-align: center
+#| fig-width: 10
+#| fig-height: 8
+
+km_fit <- survfit(Surv(time, status == 2) ~ 1, data = lung)
+t_vals <- km_fit$time[km_fit$n.event > 0]
+H_vals <- -log(km_fit$surv[km_fit$n.event > 0])
+F_vals <-  1  - km_fit$surv[km_fit$n.event > 0]
+
+par(mfrow = c(2, 2), mar = c(4,4,3,1))
+
+# 1. Exponential
+plot(t_vals, H_vals, type = "s", col = "#2C7BB6", lwd = 2,
+     xlab = "t", ylab = expression(hat(H)(t)),
+     main = "Exponential Check\nH(t) vs t")
+abline(lm(H_vals ~ t_vals), col = "#D7191C", lty = 2, lwd = 1.5)
+
+# 2. Weibull
+lH  <- log(H_vals);  lt <- log(t_vals)
+plot(lt, lH, type = "p", col = "#2C7BB6", pch = 16, cex = 0.6,
+     xlab = "log(t)", ylab = "log H(t)",
+     main = "Weibull Check\nlog H(t) vs log(t)")
+abline(lm(lH ~ lt), col = "#D7191C", lty = 2, lwd = 1.5)
+
+# 3. Log-Normal
+z_vals <- qnorm(pmin(F_vals, 0.9999))
+plot(log(t_vals), z_vals, type = "p", col = "#2C7BB6", pch = 16, cex = 0.6,
+     xlab = "log(t)", ylab = expression(Phi^{-1}(F(t))),
+     main = "Log-Normal Check\nΦ⁻¹(F(t)) vs log(t)")
+abline(lm(z_vals ~ log(t_vals)), col = "#D7191C", lty = 2, lwd = 1.5)
+
+# 4. Log-Logistic
+lo_vals <- log(F_vals / (1 - F_vals))
+plot(log(t_vals), lo_vals, type = "p", col = "#2C7BB6", pch = 16, cex = 0.6,
+     xlab = "log(t)", ylab = "logit F(t)",
+     main = "Log-Logistic Check\nlogit F(t) vs log(t)")
+abline(lm(lo_vals ~ log(t_vals)), col = "#D7191C", lty = 2, lwd = 1.5)
+```
+
+## Maximum Likelihood Estimation
+
+With right-censored data, the likelihood is:
+
+$$L(\boldsymbol{\theta}) = \prod_{i: \delta_i=1} f(t_i;\boldsymbol{\theta}) \cdot \prod_{i: \delta_i=0} S(t_i;\boldsymbol{\theta}) = \prod_{i=1}^n [h(t_i;\boldsymbol{\theta})]^{\delta_i} S(t_i;\boldsymbol{\theta})$$
+
+For the **exponential model**, the MLE of $\lambda$ has the closed form:
+
+$$\hat{\lambda} = \frac{r}{\sum_{i=1}^n t_i}$$
+
+where $r = \sum \delta_i$ is the number of observed events and $\sum t_i$ is the total follow-up time.
+
+For Weibull, Gamma, and Log-Normal, numerical optimisation is required.
+
+## Fitting with `flexsurv`
+
+```{r}
+#| label: fit-parametric
+
+fit_exp  <- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = "exponential")
+fit_weib <- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = "weibull")
+fit_lnrm <- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = "lnorm")
+fit_gam  <- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = "gamma")
+fit_ggam <- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = "gengamma")
+
+# Model comparison
+aic_df <- data.frame(
+  Model  = c("Exponential","Weibull","Log-Normal","Gamma","Gen. Gamma"),
+  LogLik = c(logLik(fit_exp),logLik(fit_weib),logLik(fit_lnrm),
+              logLik(fit_gam),logLik(fit_ggam)),
+  AIC    = c(AIC(fit_exp),AIC(fit_weib),AIC(fit_lnrm),
+             AIC(fit_gam),AIC(fit_ggam)),
+  BIC    = c(BIC(fit_exp),BIC(fit_weib),BIC(fit_lnrm),
+             BIC(fit_gam),BIC(fit_ggam))
+) |> mutate(across(where(is.numeric), \(x) round(x, 2)))
+
+kbl(aic_df, caption = "AIC/BIC comparison of parametric survival models") |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center")
+```
+
+```{r}
+#| label: fig-param-fits
+#| fig-cap: "Fitted parametric survival curves vs Kaplan–Meier estimate"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 5
+
+plot(fit_weib, col = "#D7191C", lwd = 2, ci = FALSE,
+     xlab = "Time (days)", ylab = "S(t)",
+     main = "Parametric Fits vs Kaplan–Meier")
+lines(fit_exp,  col = "#2C7BB6",  lwd = 2, ci = FALSE)
+lines(fit_lnrm, col = "#1A9641",  lwd = 2, ci = FALSE)
+lines(fit_gam,  col = "#FF7F00",  lwd = 2, ci = FALSE)
+legend("topright",
+       legend = c("KM (nonparametric)","Weibull","Exponential",
+                  "Log-Normal","Gamma"),
+       col    = c("black","#D7191C","#2C7BB6","#1A9641","#FF7F00"),
+       lwd    = 2, bty = "n")
+```
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"All models are wrong, but some are useful."*\
+**— George E.P. Box**
+:::

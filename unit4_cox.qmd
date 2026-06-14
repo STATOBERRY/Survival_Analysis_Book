@@ -1,0 +1,151 @@
+# The Cox Proportional Hazards Model
+
+The Cox model (1972) is the workhorse of modern survival analysis. It allows the joint effect of multiple covariates on survival to be estimated without specifying the shape of the baseline hazard — a crucial advantage in practice, where the hazard form is rarely known.
+
+```{r}
+#| label: setup-cox
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(survminer); library(ggplot2)
+  library(dplyr); library(knitr); library(kableExtra); library(broom)
+})
+theme_set(theme_bw(base_size = 13))
+data(lung)
+```
+
+## The Model
+
+For a subject with covariate vector $\mathbf{x} = (x_1,\ldots,x_p)^T$:
+
+$$h(t;\mathbf{x}) = h_0(t)\exp(\beta_1 x_1 + \cdots + \beta_p x_p) = h_0(t)\exp(\boldsymbol{\beta}^T\mathbf{x})$$
+
+- $h_0(t)$ is the **baseline hazard** — the hazard when all covariates are zero
+- $\exp(\boldsymbol{\beta}^T\mathbf{x})$ is the **relative hazard** (or risk score)
+- $\beta_j$ is the **log hazard ratio** for a one-unit increase in $x_j$, holding others constant
+
+**Key property — Proportional Hazards:**
+
+$$\frac{h(t;\mathbf{x})}{h(t;\mathbf{x}^*)} = \exp[\boldsymbol{\beta}^T(\mathbf{x} - \mathbf{x}^*)]$$
+
+The hazard ratio is **constant over time** — it does not depend on $t$.
+
+## Cox's Partial Likelihood
+
+Cox's insight was that $\boldsymbol{\beta}$ can be estimated without knowing $h_0(t)$. At each ordered event time $t_j$, the probability that subject $(j)$ (the one who failed) is the one who failed, given that exactly one failure occurred in the risk set $\mathcal{R}(t_j)$:
+
+$$L_j(\boldsymbol{\beta}) = \frac{\exp(\boldsymbol{\beta}^T \mathbf{x}_{(j)})}{\sum_{l \in \mathcal{R}(t_j)} \exp(\boldsymbol{\beta}^T \mathbf{x}_l)}$$
+
+The **partial likelihood** is $L_P(\boldsymbol{\beta}) = \prod_{j=1}^k L_j(\boldsymbol{\beta})$.
+
+Maximising $\log L_P(\boldsymbol{\beta})$ gives $\hat{\boldsymbol{\beta}}$, which is consistent and asymptotically normal.
+
+## Fitting the Cox Model in R
+
+```{r}
+#| label: cox-fit
+
+cox_fit <- coxph(Surv(time, status==2) ~ age + sex + ph.ecog + ph.karno + wt.loss,
+                 data = lung)
+summary(cox_fit)
+```
+
+```{r}
+#| label: fig-forest
+#| fig-cap: "Forest plot of hazard ratios from the Cox model"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 5
+
+ggforest(cox_fit, data = lung,
+         main = "Cox PH Model: Hazard Ratios (Lung Cancer Data)")
+```
+
+## Interpretation of Coefficients
+
+```{r}
+#| label: tbl-cox-hr
+#| tbl-cap: "Estimated hazard ratios with 95% confidence intervals"
+
+tidy(cox_fit, exponentiate = TRUE, conf.int = TRUE) |>
+  mutate(
+    term = c("Age (per year)","Sex (female vs male)",
+             "ECOG status","Karnofsky score","Weight loss"),
+    across(where(is.numeric), \(x) round(x, 3))
+  ) |>
+  select(term, estimate, conf.low, conf.high, p.value) |>
+  kbl(col.names = c("Covariate","HR","Lower 95%","Upper 95%","p-value"),
+      align = "lcccc") |>
+  kable_styling(bootstrap_options = c("striped","condensed"),
+                full_width = FALSE, position = "center") |>
+  column_spec(2:4, bold = TRUE)
+```
+
+::: {.callout-note title="Interpreting Hazard Ratios"}
+-   HR = 1: no association
+-   HR > 1: increased hazard (worse survival) per unit increase in covariate
+-   HR < 1: decreased hazard (better survival) — protective factor
+
+**Example**: `sex` HR ≈ 0.59 means female patients have a 41% lower risk of death compared to males at any time point (95% CI: 0.42–0.82).
+:::
+
+## Testing the Proportional Hazards Assumption
+
+The PH assumption can be tested via **Schoenfeld residuals**: under PH, the scaled Schoenfeld residuals for covariate $j$ should be uncorrelated with time.
+
+```{r}
+#| label: fig-ph-test
+#| fig-cap: "Schoenfeld residuals test for the PH assumption"
+#| fig-align: center
+#| fig-width: 10
+#| fig-height: 8
+
+ph_test <- cox.zph(cox_fit)
+print(ph_test)
+ggcoxzph(ph_test, ggtheme = theme_bw(base_size = 12))
+```
+
+::: {.callout-important title="What to Do When PH Is Violated"}
+If the global test or individual covariate test is significant ($p < 0.05$), PH is violated. Options:
+
+1.  **Stratify** on the violating covariate: `coxph(Surv ~ x + strata(z))`
+2.  **Add a time-interaction** term: `x:log(time)`
+3.  **Use an accelerated failure time (AFT) model** (no PH assumption)
+4.  **Flexible parametric models** (e.g., Royston–Parmar spline models)
+:::
+
+## Adjusted Survival Curves from Cox Model
+
+```{r}
+#| label: fig-cox-surv
+#| fig-cap: "Adjusted survival curves by sex from the Cox model (covariates at mean)"
+#| fig-align: center
+#| fig-width: 9
+#| fig-height: 5
+
+newdat <- data.frame(
+  age      = rep(mean(lung$age, na.rm=TRUE), 2),
+  sex      = c(1, 2),
+  ph.ecog  = c(1, 1),
+  ph.karno = rep(mean(lung$ph.karno, na.rm=TRUE), 2),
+  wt.loss  = rep(mean(lung$wt.loss, na.rm=TRUE), 2)
+)
+cox_surv <- survfit(cox_fit, newdata = newdat)
+
+ggsurvplot(cox_surv,
+           data        = newdat,
+           legend.labs = c("Male (adj.)","Female (adj.)"),
+           palette     = c("#D7191C","#2C7BB6"),
+           conf.int    = TRUE,
+           xlab        = "Time (days)", ylab = "S(t)",
+           title       = "Adjusted Survival by Sex (Cox Model, other covariates at mean)",
+           ggtheme     = theme_bw(base_size = 13))
+```
+
+::: {.callout-caution title="Historical Insights"}
+**Sir David Roxbee Cox (1924–2022)** was arguably the most influential statistician of the 20th century. He proposed the proportional hazards model in a landmark 1972 paper in the *Journal of the Royal Statistical Society*. The paper introduced both the model and the concept of partial likelihood — a method of inference so elegant and novel that it required a completely new theoretical framework to justify. Cox was knighted in 1985 and received virtually every major statistical prize. The Cox model is among the most-cited works in all of science.
+:::
+
+::: {.callout-tip title="Quotes to Inspire"}
+*"The combination of some data and an aching desire for an answer does not ensure that a reasonable answer can be extracted from a given body of data."*\
+**— John W. Tukey**
+:::

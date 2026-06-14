@@ -1,0 +1,847 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "SURVIVAL ANALYSIS",
+    "section": "",
+    "text": "Welcome\nWelcome to Survival Analysis: Theory, Methods and R Implementation for Agricultural Research — a graduate-level course resource prepared for students of the Ph.D. programme in Agricultural Statistics at the College of Agriculture, Vellayani, Kerala Agricultural University.\nSurvival analysis is the branch of statistics dedicated to analysing the time until an event of interest — be it death, disease onset, pest infestation, crop failure, or maturation. It is an indispensable tool in agricultural research, veterinary science, plant pathology, and epidemiology, yet it is frequently treated as a peripheral topic in standard statistics curricula.\nThis book fills that gap. It provides a complete, self-contained treatment of survival analysis from first principles through to advanced regression methods and epidemic modelling, with every concept illustrated through working R code that you can run and adapt immediately.\nAs David Cox wrote, “The hazard function, perhaps more than any other, is the key to understanding the dynamics of failure.” We build our treatment around this insight — every chapter returns to the hazard function as the unifying concept that ties together mortality tables, the Kaplan–Meier estimator, parametric models, and the celebrated Cox proportional hazards model.\n\n\n\n\n\n\nHow This Book Is Organised\n\n\n\nThe book follows the STAT 607 syllabus of the Ph.D. programme in Agricultural Statistics, KAU, organised into five units:\n\nUnit I — Measures of mortality and morbidity, survival distributions, censoring, and life tables\nUnit II — Estimation of the survival function (Kaplan–Meier, actuarial, Nelson–Aalen)\nUnit III — Parametric models, goodness-of-fit, and comparison of mortality experiences\nUnit IV — Concomitant variables, Cox regression, and hazard modelling\nUnit V — Interval censoring, competing risks, and stochastic epidemic models\n\n\n\n\nWho Should Read This Book\nThis resource is intended primarily for Ph.D. students in Agricultural Statistics, Biostatistics, and related fields. It assumes familiarity with mathematical statistics at the M.Sc. level — including distribution theory, maximum likelihood estimation, and regression — but reviews key concepts as needed.\nResearchers in plant sciences, animal breeding, public health, and environmental studies will also find it a practical reference for applying survival methods to their own data.\n\n\nSoftware\nAll examples are implemented in R, using the packages survival, survminer, flexsurv, km.ci, and deSolve. Required packages are installed automatically at the start of each chapter. Code is shown in full so that results can be reproduced exactly.\n\n\nAcknowledgements\nThe syllabus and course structure follow the approved Ph.D. programme in Agricultural Statistics at Kerala Agricultural University (Order No. KAUEDU/1742/2024, dated 07-04-2025). The author thanks colleagues in the Department of Agricultural Statistics, College of Agriculture, Vellayani, for discussions that shaped the content of these notes.\n\n\nCopyright Information\n© 2025 Dr. Pratheesh P. Gopinath, Department of Agricultural Statistics, College of Agriculture, Vellayani, Kerala Agricultural University.\nThis material is made available for educational use within KAU. Reproduction or redistribution without written permission is not permitted.",
+    "crumbs": [
+      "Welcome"
+    ]
+  },
+  {
+    "objectID": "preface.html",
+    "href": "preface.html",
+    "title": "Preface",
+    "section": "",
+    "text": "Survival analysis occupies a unique place in the statistical sciences. Unlike most areas of statistics where we model what is measured, survival analysis begins by confronting what is not measured — the event times of subjects who are still alive, still healthy, or still functioning when the study ends. This incompleteness, called censoring, is not a deficiency of the data but a fundamental feature of time-to-event studies, and handling it correctly is the central challenge the subject addresses.\nThese lecture notes grew out of courses taught to graduate students in Agricultural Statistics at the College of Agriculture, Vellayani. For years I felt the need for a treatment that was rigorous enough for Ph.D. students yet connected constantly to the intuition and to practical implementation. Existing texts are either too mathematical — dwelling on measure-theoretic counting-process theory before the student has seen a single Kaplan–Meier curve — or too applied, presenting the coxph() function without explaining why a partial likelihood is needed. This book attempts a middle path.\nThe treatment here is driven by three convictions:\n\nThe hazard function is the right language. Every major concept — survival functions, parametric families, the log-rank test, the Cox model, competing risks — becomes cleaner and more unified when stated in terms of the hazard. We introduce the hazard early and return to it constantly.\nComputation and theory must be interleaved. Students learn survival analysis by fitting models, not by reading about them. Every theoretical concept in this book is immediately followed by an R implementation on a real dataset. The survival and survminer packages are used throughout; flexsurv is introduced for parametric families; deSolve supports the epidemic models in Unit V.\nAgricultural applications are not afterthoughts. Examples are drawn from crop science, veterinary medicine, entomology, epidemiology, and demography — the fields where Ph.D. students in Agricultural Statistics will actually work.\n\nThe book covers the complete STAT 607 syllabus as approved by the Academic Council of Kerala Agricultural University. Unit I builds the vocabulary: hazard functions, survival distributions, censoring mechanisms, and life tables. Unit II develops non-parametric estimation — the Kaplan–Meier and Nelson–Aalen estimators. Unit III turns to parametric families and the tools for choosing among them and for comparing groups. Unit IV introduces regression through the Cox proportional hazards model and its diagnostics. Unit V addresses three advanced topics that are increasingly important in agricultural and public-health research: interval censoring, competing risks, and stochastic epidemic models.\nI am grateful to students of the Ph.D. programme in Agricultural Statistics whose questions sharpened every explanation here. Errors that remain are my own.\nDr. Pratheesh P. Gopinath\nAssistant Professor and Head\nDepartment of Agricultural Statistics\nCollege of Agriculture, Vellayani\nKerala Agricultural University\n2025",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html",
+    "href": "unit1_mortality.html",
+    "title": "1  Measures of Mortality and Morbidity",
+    "section": "",
+    "text": "1.1 Ratios, Proportions, and Rates\nSurvival analysis begins not with equations but with data — specifically, with counts of people or organisms dying, falling ill, or failing over time. This chapter introduces the demographic and epidemiological measures that form the empirical foundation of survival analysis. These measures predate formal survival methods by centuries, yet they remain indispensable: every life table, every actuarial calculation, and every clinical trial protocol rests on the concepts introduced here.\nWe cover rates and ratios, the central mortality measures used in vital statistics, the distinction between prevalence and incidence, and the two key measures of association — relative risk and odds ratio — that arise naturally when comparing mortality experiences across groups.\nThree closely related but distinct measures pervade the literature:\nRatio: A quotient \\(A/B\\) where the numerator is not a subset of the denominator.\nProportion: A quotient \\(A/(A+B)\\) where the numerator is a subset of the denominator. A proportion always lies in \\([0, 1]\\).\nRate: A measure of occurrence per unit of population per unit of time.\nRates are the most informative measure for comparing populations of different sizes, but they require a clear specification of the population at risk and the time period.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#ratios-proportions-and-rates",
+    "href": "unit1_mortality.html#ratios-proportions-and-rates",
+    "title": "1  Measures of Mortality and Morbidity",
+    "section": "",
+    "text": "Example: Sex ratio = number of males / number of females.\n\n\n\nExample: Case fatality proportion = deaths from disease / total cases of disease.\n\n\n\nExample: Death rate = deaths per 1,000 population per year.\n\n\n\n\n\n\n\n\nCommon Confusion\n\n\n\nA “rate” in everyday language is often just a proportion. In epidemiology and demography, a true rate must have time in the denominator (explicitly or implicitly). The distinction matters when computing person-years of exposure.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#crude-birth-rate",
+    "href": "unit1_mortality.html#crude-birth-rate",
+    "title": "1  Measures of Mortality and Morbidity",
+    "section": "1.2 Crude Birth Rate",
+    "text": "1.2 Crude Birth Rate\nThe Crude Birth Rate (CBR) is the number of live births per 1,000 mid-year population in a given year:\n\\[\\text{CBR} = \\frac{B}{P} \\times 1000\\]\nwhere \\(B\\) = total live births during the year and \\(P\\) = mid-year population.\n“Crude” means the rate is computed for the entire population without adjustment for age or sex composition.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#mortality-measures",
+    "href": "unit1_mortality.html#mortality-measures",
+    "title": "1  Measures of Mortality and Morbidity",
+    "section": "1.3 Mortality Measures",
+    "text": "1.3 Mortality Measures\n\n1.3.1 Crude Death Rate\n\\[\\text{CDR} = \\frac{D}{P} \\times 1000\\]\nwhere \\(D\\) = total deaths during the year. CDR is useful for broad comparisons but can be misleading when populations have very different age structures.\n\n\n1.3.2 Age-Specific Death Rate\n\\[\\text{ASDR}_x = \\frac{D_x}{P_x} \\times 1000\\]\nwhere \\(D_x\\) and \\(P_x\\) are deaths and mid-year population in the age group \\([x, x+n)\\).\n\n\n1.3.3 Infant Mortality Rate\n\\[\\text{IMR} = \\frac{\\text{Deaths of children under 1 year}}{\\text{Live births}} \\times 1000\\]\nIMR is widely used as an indicator of overall public health and quality of life.\n\n\n1.3.4 Standardised Mortality Ratio (SMR)\nWhen two populations have different age distributions, crude death rates are not directly comparable. The SMR solves this by comparing observed deaths in the study population to those expected if the standard population’s age-specific rates applied:\n\\[\\text{SMR} = \\frac{O}{E} \\times 100 = \\frac{\\sum_x D_x^{\\text{study}}}{\\sum_x P_x^{\\text{study}} \\times m_x^{\\text{standard}}} \\times 100\\]\n\\(\\text{SMR} &gt; 100\\) indicates higher mortality than the standard; \\(\\text{SMR} &lt; 100\\) indicates lower.\n\nsmr_data &lt;- data.frame(\n  Age_Group    = c(\"0–14\",\"15–44\",\"45–64\",\"65+\"),\n  Pop_Study    = c(12000, 25000, 18000, 5000),\n  Deaths_Study = c(18, 35, 144, 250),\n  Std_Rate     = c(1.5, 1.4, 8.0, 50.0)   # per 1000 per year\n)\nsmr_data &lt;- smr_data |&gt;\n  mutate(Expected = Pop_Study * Std_Rate / 1000)\n\ntotal_O &lt;- sum(smr_data$Deaths_Study)\ntotal_E &lt;- sum(smr_data$Expected)\nsmr_val &lt;- total_O / total_E * 100\n\nsmr_data |&gt;\n  mutate(across(where(is.numeric), \\(x) round(x, 1))) |&gt;\n  kbl(col.names = c(\"Age Group\",\"Pop (Study)\",\"Deaths (Study)\",\n                    \"Std Rate (/1000)\",\"Expected Deaths\"),\n      align = \"c\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\",\"condensed\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  footnote(general = paste0(\"Total observed = \", total_O,\n                             \";  Total expected = \", round(total_E,1),\n                             \";  SMR = \", round(smr_val,1)))\n\n\n\nTable 1.1: SMR calculation: Study population vs standard rates\n\n\n\n\n\n\nAge Group\nPop (Study)\nDeaths (Study)\nStd Rate (/1000)\nExpected Deaths\n\n\n\n\n0–14\n12000\n18\n1.5\n18\n\n\n15–44\n25000\n35\n1.4\n35\n\n\n45–64\n18000\n144\n8.0\n144\n\n\n65+\n5000\n250\n50.0\n250\n\n\n\nNote: \n\n\n\n\n\n\n Total observed = 447; Total expected = 447; SMR = 100",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#person-years-of-exposure",
+    "href": "unit1_mortality.html#person-years-of-exposure",
+    "title": "1  Measures of Mortality and Morbidity",
+    "section": "1.4 Person-Years of Exposure",
+    "text": "1.4 Person-Years of Exposure\nIn long-term cohort studies (e.g., longitudinal crop trials or animal feeding experiments), subjects enter and leave at different times. Simply dividing by the number of subjects ignores these varying exposure periods.\nPerson-years accumulate the actual time each subject was at risk:\n\\[\\text{Incidence rate} = \\frac{\\text{Number of new cases}}{\\sum_{i=1}^n t_i^*}\\]\nwhere \\(t_i^*\\) is the time subject \\(i\\) was under observation (whether they experienced the event or were censored).\n\n\n\n\n\n\nAgricultural Application\n\n\n\nIn a field trial monitoring time-to-pest-infestation across 50 plots over 3 seasons, some plots are harvested early (censored). Person-plot-seasons must be used in the denominator, not simply 50 × 3.\n\n\n\nset.seed(7)\npy_data &lt;- data.frame(\n  id      = factor(1:8),\n  enter   = c(0,0,0,1,2,0,3,0),\n  exit    = c(3,6,7,8,5,4,10,9),\n  event   = c(TRUE,FALSE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE)\n)\n\nggplot(py_data, aes(y = id)) +\n  geom_segment(aes(x = enter, xend = exit, yend = id),\n               linewidth = 1.4, colour = \"#2C7BB6\") +\n  geom_point(aes(x = exit,\n                 colour = event, shape = event), size = 3.5) +\n  scale_colour_manual(values = c(\"TRUE\"=\"#D7191C\",\"FALSE\"=\"#636363\"),\n                      labels = c(\"Censored\",\"Event\")) +\n  scale_shape_manual(values  = c(\"TRUE\"=4,\"FALSE\"=1),\n                     labels  = c(\"Censored\",\"Event\")) +\n  labs(title = \"Cohort Study Timeline with Censoring\",\n       x = \"Time (months)\", y = \"Subject\",\n       colour = NULL, shape = NULL) +\n  theme(legend.position = \"bottom\")\n\n\n\n\n\n\n\nFigure 1.1: Person-year exposure for 8 subjects in a hypothetical cohort study",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#prevalence-and-incidence",
+    "href": "unit1_mortality.html#prevalence-and-incidence",
+    "title": "1  Measures of Mortality and Morbidity",
+    "section": "1.5 Prevalence and Incidence",
+    "text": "1.5 Prevalence and Incidence\nTwo fundamental measures of disease burden:\n\n\n\n\n\n\n\n\nMeasure\nDefinition\nWhen to use\n\n\n\n\nPrevalence\nProportion of population currently with condition\nCross-sectional surveys; chronic disease burden\n\n\nIncidence\nRate of new cases per unit time\nAetiology studies; tracking epidemics\n\n\n\nThe approximate relationship is:\n\\[\\text{Prevalence} \\approx \\text{Incidence} \\times \\text{Mean Duration}\\]\nThis formula (sometimes called Little’s Law in epidemiology) implies that a high-prevalence disease may have either high incidence or long duration (or both).",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#relative-risk-and-odds-ratio",
+    "href": "unit1_mortality.html#relative-risk-and-odds-ratio",
+    "title": "1  Measures of Mortality and Morbidity",
+    "section": "1.6 Relative Risk and Odds Ratio",
+    "text": "1.6 Relative Risk and Odds Ratio\nWhen comparing mortality or disease rates between two groups (exposed vs unexposed), two measures are routinely used.\n\n1.6.1 Relative Risk (Risk Ratio)\nLet \\(p_1\\) = risk in exposed group and \\(p_0\\) = risk in unexposed group:\n\\[\\text{RR} = \\frac{p_1}{p_0}\\]\n\n\\(\\text{RR} = 1\\): no association\n\\(\\text{RR} &gt; 1\\): exposure increases risk\n\\(\\text{RR} &lt; 1\\): exposure is protective\n\nRR is the natural measure in prospective (cohort) studies.\n\n\n1.6.2 Odds Ratio\n\\[\\text{OR} = \\frac{p_1/(1-p_1)}{p_0/(1-p_0)}\\]\nThe OR is the only association measure available from case-control studies (where total person-time cannot be computed). For rare events (\\(p_1, p_0 &lt; 0.1\\)), OR \\(\\approx\\) RR.\n\nct &lt;- matrix(c(80, 120, 30, 270), nrow = 2,\n             dimnames = list(c(\"Exposed\",\"Unexposed\"),\n                             c(\"Disease\",\"No Disease\")))\nct_df &lt;- as.data.frame.matrix(ct) |&gt;\n  mutate(Total = rowSums(across(everything())),\n         Risk  = Disease / Total)\n\nct_df |&gt;\n  kbl(align = \"c\",\n      col.names = c(\"Disease\",\"No Disease\",\"Total\",\"Risk\")) |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  add_header_above(c(\" \" = 1, \"Outcome\" = 2, \" \" = 2))\n# Compute measures\np1  &lt;- ct[1,1] / sum(ct[1,])\np0  &lt;- ct[2,1] / sum(ct[2,])\nrr  &lt;- p1 / p0\nor  &lt;- (ct[1,1]*ct[2,2]) / (ct[1,2]*ct[2,1])\ncat(sprintf(\"\\nRisk (exposed)   = %.3f\\nRisk (unexposed) = %.3f\\n\", p1, p0))\n\n\nRisk (exposed)   = 0.727\nRisk (unexposed) = 0.308\n\ncat(sprintf(\"Relative Risk    = %.2f\\nOdds Ratio       = %.2f\\n\", rr, or))\n\nRelative Risk    = 2.36\nOdds Ratio       = 6.00\n\n\n\n\nTable 1.2: 2×2 contingency table: Exposed vs unexposed, disease vs no disease\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOutcome\n\n\n\n\n\nDisease\nNo Disease\nTotal\nRisk\n\n\n\n\nExposed\n80\n30\n110\n0.7272727\n\n\nUnexposed\n120\n270\n390\n0.3076923\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“To call in the statistician after the experiment is done may be no more than asking him to perform a post-mortem examination: he may be able to say what the experiment died of.”\n— Sir Ronald A. Fisher",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_distributions.html",
+    "href": "unit1_distributions.html",
+    "title": "2  Survival Distributions",
+    "section": "",
+    "text": "2.1 The Survival Function\nA survival distribution is a probability model for the time \\(T\\) until an event of interest. This chapter develops the mathematical vocabulary — survival function, hazard function, cumulative hazard — that underpins every method in this book. We then survey the standard parametric families used in agricultural and biological applications.\nLet \\(T \\geq 0\\) be a continuous random variable representing the time to the event. The survival function is:\n\\[S(t) = P(T &gt; t) = 1 - F(t), \\quad t \\geq 0\\]\nProperties:",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_distributions.html#the-survival-function",
+    "href": "unit1_distributions.html#the-survival-function",
+    "title": "2  Survival Distributions",
+    "section": "",
+    "text": "\\(S(0) = 1\\) — all subjects are event-free at the start\n\\(S(t)\\) is non-increasing: \\(S(t_1) \\geq S(t_2)\\) for \\(t_1 &lt; t_2\\)\n\\(\\lim_{t \\to \\infty} S(t) = 0\\) (in most models)",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_distributions.html#the-hazard-function",
+    "href": "unit1_distributions.html#the-hazard-function",
+    "title": "2  Survival Distributions",
+    "section": "2.2 The Hazard Function",
+    "text": "2.2 The Hazard Function\nThe hazard function \\(h(t)\\) represents the instantaneous rate of failure at time \\(t\\), conditional on survival to \\(t\\):\n\\[h(t) = \\lim_{\\Delta t \\to 0} \\frac{P(t \\leq T &lt; t + \\Delta t \\mid T \\geq t)}{\\Delta t} = \\frac{f(t)}{S(t)}\\]\nwhere \\(f(t) = -S'(t)\\) is the probability density function. Intuition: \\(h(t)\\,\\Delta t \\approx P(\\text{fail in } [t, t+\\Delta t) \\mid \\text{alive at } t)\\).\nThe hazard can take any non-negative value — it is not a probability.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_distributions.html#the-cumulative-hazard-function",
+    "href": "unit1_distributions.html#the-cumulative-hazard-function",
+    "title": "2  Survival Distributions",
+    "section": "2.3 The Cumulative Hazard Function",
+    "text": "2.3 The Cumulative Hazard Function\n\\[H(t) = \\int_0^t h(u)\\,du = -\\log S(t)\\]\nTherefore: \\(\\quad S(t) = e^{-H(t)}\\)\nThis relationship is fundamental: once we have \\(H(t)\\) we have everything.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_distributions.html#key-relationships",
+    "href": "unit1_distributions.html#key-relationships",
+    "title": "2  Survival Distributions",
+    "section": "2.4 Key Relationships",
+    "text": "2.4 Key Relationships\n\\[f(t) = h(t) \\cdot S(t) = h(t)\\, e^{-H(t)}\\]\nThe four functions \\(f(t)\\), \\(F(t)\\), \\(S(t)\\), \\(h(t)\\) each determine all the others:\n\nt &lt;- seq(0.1, 600, by = 1)\nshape &lt;- 2; scale &lt;- 200\n\ndf &lt;- data.frame(\n  t    = rep(t, 4),\n  val  = c(dweibull(t, shape, scale),\n           pweibull(t, shape, scale, lower.tail = FALSE),\n           dweibull(t,shape,scale)/pweibull(t,shape,scale,lower.tail=FALSE),\n           -log(pweibull(t, shape, scale, lower.tail = FALSE))),\n  func = rep(c(\"f(t)  Density\",\"S(t)  Survival\",\n               \"h(t)  Hazard\",\"H(t)  Cumulative Hazard\"),\n             each = length(t))\n)\n\nggplot(df, aes(x = t, y = val, colour = func)) +\n  geom_line(linewidth = 1.1) +\n  facet_wrap(~func, scales = \"free_y\", ncol = 2) +\n  scale_colour_manual(values = c(\"#2C7BB6\",\"#1A9641\",\"#D7191C\",\"#FF7F00\")) +\n  labs(x = \"Time t\", y = \"Value\",\n       title = \"Core Functions of the Weibull(2, 200) Distribution\") +\n  theme(legend.position = \"none\",\n        strip.background = element_rect(fill = \"#EAF4FB\"),\n        strip.text = element_text(face = \"bold\"))\n\n\n\n\n\n\n\nFigure 2.1: The four core functions for a Weibull(shape = 2, scale = 200) distribution",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_distributions.html#standard-parametric-families",
+    "href": "unit1_distributions.html#standard-parametric-families",
+    "title": "2  Survival Distributions",
+    "section": "2.5 Standard Parametric Families",
+    "text": "2.5 Standard Parametric Families\n\n2.5.1 Exponential Distribution\nThe simplest model: constant hazard \\(h(t) = \\lambda\\).\n\\[f(t) = \\lambda e^{-\\lambda t}, \\quad S(t) = e^{-\\lambda t}, \\quad H(t) = \\lambda t\\]\nMean = \\(1/\\lambda\\), Variance = \\(1/\\lambda^2\\).\nThe exponential possesses the memoryless property: \\(P(T &gt; s + t \\mid T &gt; s) = P(T &gt; t)\\). This means a survivor at age \\(s\\) has exactly the same future failure distribution as a new subject. This is biologically implausible for ageing organisms but reasonable for certain mechanical failures or rare random events (sudden crop disease outbreaks, lightning strikes).\n\n\n2.5.2 Weibull Distribution\nGeneralises the exponential with a shape parameter \\(\\gamma &gt; 0\\):\n\\[f(t) = \\frac{\\gamma}{\\lambda}\\left(\\frac{t}{\\lambda}\\right)^{\\gamma-1} \\exp\\!\\left\\{-\\!\\left(\\frac{t}{\\lambda}\\right)^\\gamma\\right\\}, \\quad h(t) = \\frac{\\gamma}{\\lambda}\\left(\\frac{t}{\\lambda}\\right)^{\\gamma-1}\\]\n\n\n\n\n\n\n\n\n\\(\\gamma\\)\nHazard shape\nBiological interpretation\n\n\n\n\n\\(\\gamma &lt; 1\\)\nDecreasing\nEarly failures dominate; survival improves after initial period\n\n\n\\(\\gamma = 1\\)\nConstant\nExponential; random, age-independent failures\n\n\n\\(\\gamma &gt; 1\\)\nIncreasing\nAgeing; wear-out failures; classic mortality pattern\n\n\n\n\n\n2.5.3 Gamma Distribution\n\\[f(t) = \\frac{\\lambda^\\alpha}{\\Gamma(\\alpha)} t^{\\alpha-1} e^{-\\lambda t}, \\quad \\alpha &gt; 0,\\; \\lambda &gt; 0\\]\nThe hazard is non-monotone for \\(\\alpha \\neq 1\\), converging to \\(\\lambda\\) as \\(t \\to \\infty\\). Reduces to Exponential when \\(\\alpha = 1\\).\n\n\n2.5.4 Log-Normal Distribution\n\\[\\log T \\sim N(\\mu, \\sigma^2)\\]\nThe hazard first increases then decreases — typical in some infectious disease processes where early mortality is high, survivors become robust, but eventually succumb.\n\n\n2.5.5 Gompertz Distribution\nWidely used in actuarial science and animal demography:\n\\[h(t) = \\alpha e^{\\beta t}, \\qquad S(t) = \\exp\\!\\left\\{-\\frac{\\alpha}{\\beta}(e^{\\beta t} - 1)\\right\\}\\]\nHazard increases exponentially with time — a good model for senescent mortality in humans and animals. The parameter \\(\\alpha &gt; 0\\) is the baseline hazard; \\(\\beta &gt; 0\\) controls the rate of ageing.\n\n\n2.5.6 Pareto Distribution\n\\[h(t) = \\frac{\\alpha}{t + \\theta}, \\qquad S(t) = \\left(\\frac{\\theta}{t + \\theta}\\right)^\\alpha\\]\nDecreasing hazard — appropriate when initial risk is high and survivors become progressively more robust (e.g., seedling establishment).\n\n\n2.5.7 Rayleigh Distribution\nSpecial case of Weibull with \\(\\gamma = 2\\):\n\\[h(t) = \\frac{t}{\\sigma^2}, \\qquad S(t) = \\exp\\!\\left(-\\frac{t^2}{2\\sigma^2}\\right)\\]\nLinearly increasing hazard; used in reliability engineering.\n\nt &lt;- seq(0.01, 5, by = 0.01)\n\nhz_df &lt;- data.frame(\n  t = rep(t, 5),\n  h = c(\n    rep(0.5, length(t)),\n    \n    dweibull(t, shape = 2, scale = 1) /\n      pweibull(t, shape = 2, scale = 1, lower.tail = FALSE),\n    \n    dweibull(t, shape = 0.5, scale = 1) /\n      pweibull(t, shape = 0.5, scale = 1, lower.tail = FALSE),\n    \n    dgamma(t, shape = 2, rate = 1) /\n      pgamma(t, shape = 2, rate = 1, lower.tail = FALSE),\n    \n    dlnorm(t, meanlog = 0, sdlog = 0.5) /\n      plnorm(t, meanlog = 0, sdlog = 0.5, lower.tail = FALSE)\n  ),\n  Distribution = rep(\n    c(\n      \"Exponential (λ=0.5)\",\n      \"Weibull γ=2 (increasing)\",\n      \"Weibull γ=0.5 (decreasing)\",\n      \"Gamma α=2\",\n      \"Log-Normal μ=0,σ=0.5\"\n    ),\n    each = length(t)\n  )\n)\n\nggplot(hz_df |&gt; filter(h &lt; 4), aes(x = t, y = h, colour = Distribution)) +\n  geom_line(linewidth = 1) +\n  scale_colour_brewer(palette = \"Set1\") +\n  labs(title = \"Hazard Functions of Common Survival Distributions\",\n       x = \"Time t\", y = \"Hazard h(t)\", colour = NULL) +\n  theme(legend.position = \"bottom\",\n        legend.text = element_text(size = 10))\n\n\n\n\n\n\n\nFigure 2.2: Hazard functions for the major parametric families",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_distributions.html#expectation-and-variance-of-future-lifetime",
+    "href": "unit1_distributions.html#expectation-and-variance-of-future-lifetime",
+    "title": "2  Survival Distributions",
+    "section": "2.6 Expectation and Variance of Future Lifetime",
+    "text": "2.6 Expectation and Variance of Future Lifetime\nFor a random variable \\(T\\) with survival function \\(S(t)\\):\n\\[E[T] = \\int_0^\\infty S(t)\\, dt\\]\n\\[\\text{Var}(T) = 2\\int_0^\\infty t\\, S(t)\\, dt - \\left[E(T)\\right]^2\\]\n\ndist_tbl &lt;- data.frame(\n  Distribution = c(\"Exponential\",\"Weibull\",\"Gamma\",\"Log-Normal\",\"Gompertz\"),\n  Mean         = c(\"$1/\\\\lambda$\",\n                   \"$\\\\lambda\\\\,\\\\Gamma(1+1/\\\\gamma)$\",\n                   \"$\\\\alpha/\\\\lambda$\",\n                   \"$e^{\\\\mu + \\\\sigma^2/2}$\",\n                   \"—\"),\n  Variance     = c(\"$1/\\\\lambda^2$\",\n                   \"$\\\\lambda^2[\\\\Gamma(1+2/\\\\gamma)-\\\\Gamma^2(1+1/\\\\gamma)]$\",\n                   \"$\\\\alpha/\\\\lambda^2$\",\n                   \"$(e^{\\\\sigma^2}-1)e^{2\\\\mu+\\\\sigma^2}$\",\n                   \"—\"),\n  Hazard_Shape = c(\"Constant\",\"Monotone\",\"Non-monotone\",\"Unimodal\",\"Increasing exp.\")\n)\n\nkbl(dist_tbl, escape = FALSE,\n    col.names = c(\"Distribution\",\"Mean\",\"Variance\",\"Hazard shape\"),\n    align = \"clll\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\",\"condensed\"),\n                full_width = FALSE, position = \"center\")\n\n\n\nTable 2.1: Mean and variance of standard survival distributions\n\n\n\n\n\n\nDistribution\nMean\nVariance\nHazard shape\n\n\n\n\nExponential\n$1/\\lambda$\n$1/\\lambda^2$\nConstant\n\n\nWeibull\n$\\lambda\\,\\Gamma(1+1/\\gamma)$\n$\\lambda^2[\\Gamma(1+2/\\gamma)-\\Gamma^2(1+1/\\gamma)]$\nMonotone\n\n\nGamma\n$\\alpha/\\lambda$\n$\\alpha/\\lambda^2$\nNon-monotone\n\n\nLog-Normal\n$e^{\\mu + \\sigma^2/2}$\n$(e^{\\sigma^2}-1)e^{2\\mu+\\sigma^2}$\nUnimodal\n\n\nGompertz\n—\n—\nIncreasing exp.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHistorical Insights\n\n\n\nBenjamin Gompertz (1779–1865) was an English self-taught mathematician and actuary. In 1825 he observed that human mortality rates increase roughly exponentially with age — a pattern so consistent across populations that it became known as the Gompertz Law of Mortality. His original paper, “On the Nature of the Function Expressive of the Law of Human Mortality,” remains one of the most cited works in actuarial science and demography, nearly two centuries after its publication.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_censoring.html",
+    "href": "unit1_censoring.html",
+    "title": "3  Censoring and Truncation",
+    "section": "",
+    "text": "3.1 Why Censoring Arises\nCensoring is the defining feature of survival data. It arises whenever the exact event time is not observed for every subject — something that happens in virtually every real study. Handling censoring correctly is the central methodological challenge of survival analysis; ignoring it leads to systematically biased estimates.\nConsider monitoring 100 insect colonies for the time until collapse. At the end of the study period:\nFor the 32 surviving colonies, simply ignoring them understates colony longevity — we are throwing away real information. Treating their observation time as an event time (i.e., pretending they collapsed at \\(t_{\\text{end}}\\)) overestimates mortality. Censoring methods allow us to use the partial information correctly.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Censoring and Truncation</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_censoring.html#why-censoring-arises",
+    "href": "unit1_censoring.html#why-censoring-arises",
+    "title": "3  Censoring and Truncation",
+    "section": "",
+    "text": "68 colonies have collapsed (exact event times observed)\n32 colonies are still active (we know only that \\(T_i &gt; t_{\\text{end}}\\))",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Censoring and Truncation</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_censoring.html#types-of-censoring",
+    "href": "unit1_censoring.html#types-of-censoring",
+    "title": "3  Censoring and Truncation",
+    "section": "3.2 Types of Censoring",
+    "text": "3.2 Types of Censoring\n\n3.2.1 Right Censoring (Most Common)\nThe event time \\(T_i\\) exceeds the observation time \\(C_i\\). We observe:\n\\[\\tilde{T}_i = \\min(T_i, C_i), \\qquad \\delta_i = I(T_i \\leq C_i)\\]\nwhere \\(\\delta_i = 1\\) if the event is observed, \\(\\delta_i = 0\\) if censored.\nSub-types:\n\n\n\n\n\n\n\n\nType\nMechanism\nExample\n\n\n\n\nType I\nStudy ends at fixed time \\(c\\)\nField trial terminated at harvest\n\n\nType II\nStudy ends after \\(r\\) events\nAccelerated life test: stop at 10th failure\n\n\nRandom\nCensoring time \\(C_i\\) is random, independent of \\(T_i\\)\nLoss to follow-up; competing event\n\n\n\n\n\n3.2.2 Left Censoring\nThe event occurred before observation began. We know only \\(T_i &lt; t_0\\).\n\nExample: A plant found to be already infested at first inspection — infestation time is left-censored at the inspection date.\n\n\n\n3.2.3 Interval Censoring\nWe know only that \\(L_i &lt; T_i \\leq R_i\\) — the event occurred in a known interval.\n\nExample: Trees inspected weekly; disease detected at week 5 means onset was between weeks 4 and 5. (Covered in detail in Unit V.)\n\n\n\n3.2.4 Left Truncation (Delayed Entry)\nA subject is only eligible for the study after surviving to some entry time \\(t_0\\). Any failure before \\(t_0\\) is unobservable — the subject would not have been recruited.\n\nExample: A retrospective study of crop lifespans: trees less than 5 years old are excluded. All included trees have already survived 5 years.\n\n\n\n\n\n\n\nInformative vs Non-Informative Censoring\n\n\n\nThe standard analysis assumes non-informative (independent) censoring: the censoring time \\(C_i\\) is independent of the failure time \\(T_i\\) given any covariates. If patients who feel sicker are more likely to drop out, censoring is informative and standard methods are biased. This assumption must always be assessed in practice.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Censoring and Truncation</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_censoring.html#the-censored-data-likelihood",
+    "href": "unit1_censoring.html#the-censored-data-likelihood",
+    "title": "3  Censoring and Truncation",
+    "section": "3.3 The Censored Data Likelihood",
+    "text": "3.3 The Censored Data Likelihood\nWith right censoring, the correct likelihood contribution for each subject is:\n\\[L_i(\\theta) = \\begin{cases} f(t_i;\\theta) & \\text{if } \\delta_i = 1 \\text{ (event observed)} \\\\ S(t_i;\\theta) & \\text{if } \\delta_i = 0 \\text{ (censored)} \\end{cases}\\]\nCombined: \\(L_i(\\theta) = [f(t_i;\\theta)]^{\\delta_i} [S(t_i;\\theta)]^{1-\\delta_i} = [h(t_i;\\theta)]^{\\delta_i} S(t_i;\\theta)\\)\nThe full likelihood is \\(L(\\theta) = \\prod_{i=1}^n L_i(\\theta)\\).\n\nset.seed(42)\nn &lt;- 10\ndf_cens &lt;- data.frame(\n  id     = factor(n:1),\n  start  = c(0,0,0,1,2,0,3,0,1,0),\n  end    = c(3,6,7,8,5,4,10,9,6,2),\n  status = c(\"Event\",\"Censored\",\"Event\",\"Censored\",\"Event\",\n             \"Censored\",\"Censored\",\"Event\",\"Event\",\"Censored\")\n)\n\nggplot(df_cens, aes(y = id)) +\n  geom_segment(aes(x = start, xend = end, yend = id),\n               linewidth = 1.3, colour = \"#2C7BB6\") +\n  geom_point(aes(x = end, colour = status, shape = status), size = 4) +\n  geom_vline(xintercept = 10, linetype = \"dashed\", colour = \"grey40\") +\n  scale_colour_manual(values = c(\"Event\" = \"#D7191C\",\"Censored\" = \"#636363\")) +\n  scale_shape_manual(values  = c(\"Event\" = 4, \"Censored\" = 1)) +\n  annotate(\"text\", x = 10.15, y = 0.5, label = \"Study end\", hjust = 0, size = 3.5) +\n  labs(title = \"Survival Study Timeline: Events and Censored Observations\",\n       x = \"Time\", y = \"Subject ID\",\n       colour = \"Outcome\", shape = \"Outcome\") +\n  theme(legend.position = \"bottom\")\n\n\n\n\n\n\n\nFigure 3.1: Timeline diagram illustrating different censoring patterns for 10 subjects",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Censoring and Truncation</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_censoring.html#creating-survival-objects-in-r",
+    "href": "unit1_censoring.html#creating-survival-objects-in-r",
+    "title": "3  Censoring and Truncation",
+    "section": "3.4 Creating Survival Objects in R",
+    "text": "3.4 Creating Survival Objects in R\nThe survival package represents censored data with a Surv object. For right-censored data:\n\nlibrary(survival)\n\n# Simulate 15 observations: failure times and censoring indicators\nset.seed(101)\ntime   &lt;- round(rexp(15, rate = 0.1), 1)   # true failure times\ncensor &lt;- runif(15, 3, 12)                  # censoring times\nobs_t  &lt;- pmin(time, censor)               # observed time\ndelta  &lt;- as.integer(time &lt;= censor)        # event indicator\n\n# Create Surv object\nsurv_obj &lt;- Surv(time = obs_t, event = delta)\nprint(surv_obj)  # '+' marks censored observations\n\n [1] 6.810124+ 5.888860+ 4.200000  3.200000  7.709800+ 4.900000  3.200000 \n [8] 6.400000  3.181505+ 4.000000  1.500000  0.500000  9.846205+ 5.996652+\n[15] 3.200000 \n\n\n\n\n\n\n\n\nReading Surv Output\n\n\n\nIn the printed Surv object, a + after a time value means the observation is right-censored — the event had not yet occurred at that time. Exact event times appear without any suffix.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Censoring and Truncation</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_censoring.html#representing-the-three-common-censoring-types-in-r",
+    "href": "unit1_censoring.html#representing-the-three-common-censoring-types-in-r",
+    "title": "3  Censoring and Truncation",
+    "section": "3.5 Representing the Three Common Censoring Types in R",
+    "text": "3.5 Representing the Three Common Censoring Types in R\n\n# Right censoring (standard)\ns_right &lt;- Surv(time = obs_t, event = delta, type = \"right\")\n\n# Left censoring: event known to have occurred before observation time\n# event = 1 when time is LEFT-censored (event already happened)\nleft_t     &lt;- c(2, 5, 3, 8, 4)\nleft_event &lt;- c(1, 0, 1, 0, 1)   # 1 = left-censored, 0 = observed\ns_left &lt;- Surv(time = left_t, event = left_event, type = \"left\")\n\n# Interval censoring: lower and upper bounds\nlower_t &lt;- c(1, 3, 2, 5, 4)\nupper_t &lt;- c(3, 6, 4, 8, 7)\ns_interval &lt;- Surv(time = lower_t, time2 = upper_t, type = \"interval2\")\n\ncat(\"Right-censored:\\n\"); print(s_right[1:6])\n\nRight-censored:\n\n\n[1] 6.810124+ 5.888860+ 4.200000  3.200000  7.709800+ 4.900000 \n\ncat(\"\\nLeft-censored:\\n\");  print(s_left)\n\n\nLeft-censored:\n\n\n[1] 2  5- 3  8- 4 \n\ncat(\"\\nInterval-censored:\\n\"); print(s_interval)\n\n\nInterval-censored:\n\n\n[1] [1, 3] [3, 6] [2, 4] [5, 8] [4, 7]\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“The most important questions of life are indeed, for the most part, really only problems of probability.”\n— Pierre-Simon Laplace",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Censoring and Truncation</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_lifetable.html",
+    "href": "unit1_lifetable.html",
+    "title": "4  Life Tables",
+    "section": "",
+    "text": "4.1 Components of a Life Table\nThe life table is one of the oldest statistical tools, tracing its origins to John Graunt’s Natural and Political Observations on the Bills of Mortality (1662). A life table systematically summarises the mortality experience of a cohort, translating age-specific death rates into survival probabilities and expectations of life. It is the direct ancestor of the Kaplan–Meier estimator, which can be thought of as a continuous-time, censoring-adjusted life table.\nThe standard life table columns are:",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Life Tables</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_lifetable.html#components-of-a-life-table",
+    "href": "unit1_lifetable.html#components-of-a-life-table",
+    "title": "4  Life Tables",
+    "section": "",
+    "text": "Symbol\nName\nMeaning\n\n\n\n\n\\(x\\)\nAge (or time)\nStart of the interval \\([x, x+n)\\)\n\n\n\\(l_x\\)\nSurvivors\nNumber alive at exact age \\(x\\) out of \\(l_0\\) (radix)\n\n\n\\(d_x\\)\nDeaths\nNumber dying in \\([x, x+n)\\)\n\n\n\\(q_x\\)\nProbability of death\n\\(d_x / l_x\\) — conditional on being alive at \\(x\\)\n\n\n\\(p_x\\)\nProbability of survival\n\\(1 - q_x\\)\n\n\n\\(m_x\\)\nCentral death rate\nDeaths per person-year in \\([x, x+n)\\)\n\n\n\\(L_x\\)\nPerson-years lived\nExposure in \\([x, x+n)\\): \\(L_x \\approx n(l_x - d_x/2)\\)\n\n\n\\(T_x\\)\nTotal years lived\n\\(\\sum_{u \\geq x} L_u\\)\n\n\n\\(e_x\\)\nExpectation of life\n\\(T_x / l_x\\) — mean future lifetime at age \\(x\\)",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Life Tables</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_lifetable.html#constructing-a-life-table",
+    "href": "unit1_lifetable.html#constructing-a-life-table",
+    "title": "4  Life Tables",
+    "section": "4.2 Constructing a Life Table",
+    "text": "4.2 Constructing a Life Table\n\n4.2.1 Step 1: Obtain Age-Specific Death Rates\nFrom vital statistics or a cohort study, compute \\(m_x = D_x / P_x\\) for each age group.\n\n\n4.2.2 Step 2: Convert \\(m_x\\) to \\(q_x\\)\nFor an \\(n\\)-year interval, assuming uniform distribution of deaths:\n\\[q_x = \\frac{n \\cdot m_x}{1 + (n/2) \\cdot m_x}\\]\n\n\n4.2.3 Step 3: Compute \\(l_x\\) and \\(d_x\\)\nStarting with radix \\(l_0 = 100{,}000\\):\n\\[l_{x+n} = l_x \\cdot p_x = l_x \\cdot (1 - q_x), \\qquad d_x = l_x \\cdot q_x\\]\n\n\n4.2.4 Step 4: Compute Person-Years and Expectations\n\\[L_x = n \\cdot l_{x+n} + \\frac{n}{2} \\cdot d_x, \\qquad T_x = \\sum_{u=x}^{\\omega} L_u, \\qquad e_x = \\frac{T_x}{l_x}\\]\n\n# Input: age-specific central death rates (per 1000 per year)\nlt &lt;- data.frame(\n  x  = c(0,1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80),\n  n  = c(1,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5),\n  mx = c(7.2,0.5,0.3,0.2,0.4,0.9,1.0,1.2,1.8,2.8,4.5,8.0,\n         14.0,24.0,40.0,65.0,100.0,180.0) / 1000\n)\n\n# Compute qx (Reed-Merrell approximation: qx = 1 - exp(-n*mx) for small mx)\nlt$qx &lt;- 1 - exp(-lt$n * lt$mx)\nlt$qx[nrow(lt)] &lt;- 1.0          # everyone dies in final interval\n\n# Compute lx and dx\nl0 &lt;- 100000\nlt$lx &lt;- numeric(nrow(lt))\nlt$lx[1] &lt;- l0\nfor (i in 2:nrow(lt)) lt$lx[i] &lt;- lt$lx[i-1] * (1 - lt$qx[i-1])\nlt$dx &lt;- lt$lx * lt$qx\n\n# Person-years\nlt$Lx &lt;- ifelse(lt$n == 1,\n                lt$lx - 0.1 * lt$dx,            # infant\n                lt$n * (lt$lx - lt$dx / 2))\n\n# T_x and e_x\nlt$Tx &lt;- rev(cumsum(rev(lt$Lx)))\nlt$ex &lt;- lt$Tx / lt$lx\n\nlt |&gt;\n  mutate(across(c(mx,qx), \\(x) round(x,4)),\n         across(c(lx,dx,Lx,Tx), \\(x) round(x,0)),\n         ex = round(ex,1)) |&gt;\n  kbl(col.names = c(\"x\",\"n\",\"m_x\",\"q_x\",\"l_x\",\"d_x\",\"L_x\",\"T_x\",\"e_x\"),\n      align = \"c\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\",\"condensed\"),\n                full_width = FALSE, position = \"center\",\n                font_size = 12)\n\n\n\nTable 4.1: Complete life table constructed from age-specific death rates\n\n\n\n\n\n\nx\nn\nm_x\nq_x\nl_x\nd_x\nL_x\nT_x\ne_x\n\n\n\n\n0\n1\n0.0072\n0.0072\n100000\n717\n99928\n6993777\n69.9\n\n\n1\n4\n0.0005\n0.0020\n99283\n198\n396734\n6893849\n69.4\n\n\n5\n5\n0.0003\n0.0015\n99084\n149\n495050\n6497115\n65.6\n\n\n10\n5\n0.0002\n0.0010\n98936\n99\n494431\n6002065\n60.7\n\n\n15\n5\n0.0004\n0.0020\n98837\n197\n493690\n5507634\n55.7\n\n\n20\n5\n0.0009\n0.0045\n98639\n443\n492090\n5013944\n50.8\n\n\n25\n5\n0.0010\n0.0050\n98196\n490\n489758\n4521854\n46.0\n\n\n30\n5\n0.0012\n0.0060\n97707\n584\n487072\n4032096\n41.3\n\n\n35\n5\n0.0018\n0.0090\n97122\n870\n483436\n3545024\n36.5\n\n\n40\n5\n0.0028\n0.0139\n96252\n1338\n477915\n3061588\n31.8\n\n\n45\n5\n0.0045\n0.0222\n94914\n2112\n469290\n2583673\n27.2\n\n\n50\n5\n0.0080\n0.0392\n92802\n3639\n454914\n2114383\n22.8\n\n\n55\n5\n0.0140\n0.0676\n89163\n6028\n430747\n1659469\n18.6\n\n\n60\n5\n0.0240\n0.1131\n83135\n9401\n392175\n1228722\n14.8\n\n\n65\n5\n0.0400\n0.1813\n73734\n13366\n335258\n836548\n11.3\n\n\n70\n5\n0.0650\n0.2775\n60369\n16751\n259967\n501290\n8.3\n\n\n75\n5\n0.1000\n0.3935\n43618\n17162\n175184\n241323\n5.5\n\n\n80\n5\n0.1800\n1.0000\n26456\n26456\n66139\n66139\n2.5\n\n\n\n\n\n\n\n\n\n\n\np1 &lt;- ggplot(lt, aes(x = x, y = lx / l0)) +\n  geom_step(colour = \"#2C7BB6\", linewidth = 1.2) +\n  geom_point(colour = \"#D7191C\", size = 2) +\n  scale_y_continuous(labels = scales::percent) +\n  labs(title = expression(paste(\"Survival Curve  \", l[x]/l[0])),\n       x = \"Age (years)\", y = \"Proportion Surviving\")\n\np2 &lt;- ggplot(lt, aes(x = x, y = ex)) +\n  geom_line(colour = \"#1A9641\", linewidth = 1.2) +\n  geom_point(colour = \"#FF7F00\", size = 2) +\n  labs(title = expression(paste(\"Expectation of Life  \", e[x])),\n       x = \"Age (years)\", y = \"Years remaining\")\n\nlibrary(patchwork)\np1 + p2\n\n\n\n\n\n\n\nFigure 4.1: Survival curve and expectation of life from the life table",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Life Tables</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_lifetable.html#series-and-parallel-systems",
+    "href": "unit1_lifetable.html#series-and-parallel-systems",
+    "title": "4  Life Tables",
+    "section": "4.3 Series and Parallel Systems",
+    "text": "4.3 Series and Parallel Systems\nIn reliability and biological contexts, organisms or systems may be modelled as combinations of components:\nSeries system (weakest-link): fails when the first of \\(k\\) components fails.\n\\[S_{\\text{series}}(t) = \\prod_{j=1}^k S_j(t), \\qquad h_{\\text{series}}(t) = \\sum_{j=1}^k h_j(t)\\]\nParallel system (redundant): fails only when all \\(k\\) components fail.\n\\[S_{\\text{parallel}}(t) = 1 - \\prod_{j=1}^k [1 - S_j(t)]\\]\n\nt   &lt;- seq(0, 20, by = 0.1)\nlam &lt;- 0.2\nk_vals &lt;- c(1, 2, 3)\ncols &lt;- c(\"#2C7BB6\",\"#1A9641\",\"#D7191C\")\n\npar(mfrow = c(1,2), mar = c(4,4,3,1))\n\n# Series\nplot(t, exp(-lam*t), type=\"l\", col=cols[1], lwd=2,\n     ylim=c(0,1), xlab=\"Time\", ylab=\"S(t)\",\n     main=\"Series System\")\nfor (i in 2:3) lines(t, exp(-i*lam*t), col=cols[i], lwd=2)\nlegend(\"topright\", legend=paste0(\"k=\",k_vals),\n       col=cols, lwd=2, bty=\"n\")\n\n# Parallel\nplot(t, 1-(1-exp(-lam*t))^1, type=\"l\", col=cols[1], lwd=2,\n     ylim=c(0,1), xlab=\"Time\", ylab=\"S(t)\",\n     main=\"Parallel System\")\nfor (i in 2:3) lines(t, 1-(1-exp(-lam*t))^i, col=cols[i], lwd=2)\nlegend(\"topright\", legend=paste0(\"k=\",k_vals),\n       col=cols, lwd=2, bty=\"n\")\n\n\n\n\n\n\n\nFigure 4.2: Survival functions for series and parallel systems with k identical Exp(0.2) components\n\n\n\n\n\n\n\n\n\n\n\nHistorical Insights\n\n\n\nJohn Graunt (1620–1674) was a London haberdasher with no formal scientific training who became the founder of demography. His 1662 Natural and Political Observations Made upon the Bills of Mortality was the first systematic analysis of birth and death statistics. He constructed what is believed to be the first life table, estimated the population of London, and noticed that more boys were born than girls but that men died younger — observations that hold to this day. He was elected a Fellow of the Royal Society at the personal insistence of King Charles II.\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“Statistics are the triumph of the quantitative method, and the quantitative method is the victory of sterility and death.”\n— Hilaire Belloc (a dissenting view — included to encourage critical thinking!)",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Life Tables</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_km.html",
+    "href": "unit2_km.html",
+    "title": "5  The Kaplan–Meier Estimator",
+    "section": "",
+    "text": "5.1 The Product-Limit Formula\nThe Kaplan–Meier (KM) estimator, introduced by Edward Kaplan and Paul Meier in 1958, is the most widely used method in survival analysis. It is a non-parametric estimator of the survival function that correctly handles right-censored observations without assuming any parametric form for \\(S(t)\\).\nLet \\(t_1 &lt; t_2 &lt; \\cdots &lt; t_k\\) be the \\(k\\) distinct observed event times. At each \\(t_j\\), define:\nThe Kaplan–Meier estimator is:\n\\[\\hat{S}(t) = \\prod_{j:\\; t_j \\leq t} \\left(1 - \\frac{d_j}{n_j}\\right)\\]\nThe product structure gives the estimator its alternative name: the product-limit estimator. Each factor \\(1 - d_j/n_j\\) is the estimated conditional probability of surviving past \\(t_j\\) given survival to \\(t_j\\).",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>The Kaplan–Meier Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_km.html#the-product-limit-formula",
+    "href": "unit2_km.html#the-product-limit-formula",
+    "title": "5  The Kaplan–Meier Estimator",
+    "section": "",
+    "text": "\\(d_j\\) = number of events (failures) at time \\(t_j\\)\n\\(n_j\\) = number at risk just before time \\(t_j\\) (includes those censored at \\(t_j\\))\n\n\n\n\n\n5.1.1 Properties\n\n\\(\\hat{S}(t) = 1\\) for \\(t &lt; t_1\\) (first event time)\n\\(\\hat{S}(t)\\) is a step function with jumps only at observed event times\nIf the largest observed time is an event, \\(\\hat{S}(t_{\\max}) = 0\\); if it is censored, \\(\\hat{S}(t)\\) remains positive beyond the last event",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>The Kaplan–Meier Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_km.html#manual-calculation",
+    "href": "unit2_km.html#manual-calculation",
+    "title": "5  The Kaplan–Meier Estimator",
+    "section": "5.2 Manual Calculation",
+    "text": "5.2 Manual Calculation\n\n# Small dataset: times and event indicators\ntimes  &lt;- c(1,2,3,3,4,5,7,8,8,10,12,14)\nevents &lt;- c(1,1,1,0,1,0,1,1,0,1, 0, 1)\n\n# Build KM table\nord  &lt;- order(times)\nt_ord &lt;- times[ord]; e_ord &lt;- events[ord]\n\n# Count at risk, events, censored at each unique time\nuniq_t  &lt;- unique(t_ord[e_ord == 1])  # only event times\nkm_tbl &lt;- data.frame(t_j = uniq_t)\nkm_tbl$n_j  &lt;- sapply(km_tbl$t_j, \\(x) sum(t_ord &gt;= x))\nkm_tbl$d_j  &lt;- sapply(km_tbl$t_j, \\(x) sum(t_ord == x & e_ord == 1))\nkm_tbl$c_j  &lt;- sapply(km_tbl$t_j, \\(x) sum(t_ord == x & e_ord == 0))\nkm_tbl$cond_surv &lt;- 1 - km_tbl$d_j / km_tbl$n_j\nkm_tbl$S_t  &lt;- cumprod(km_tbl$cond_surv)\n\n# Greenwood variance\nkm_tbl$greenwood &lt;- cumsum(km_tbl$d_j / (km_tbl$n_j * (km_tbl$n_j - km_tbl$d_j)))\nkm_tbl$var_S   &lt;- km_tbl$S_t^2 * km_tbl$greenwood\nkm_tbl$se_S    &lt;- sqrt(km_tbl$var_S)\nkm_tbl$CI_lo   &lt;- pmax(0, km_tbl$S_t - 1.96 * km_tbl$se_S)\nkm_tbl$CI_hi   &lt;- pmin(1, km_tbl$S_t + 1.96 * km_tbl$se_S)\n\nkm_tbl |&gt;\n  mutate(across(c(cond_surv,S_t,se_S,CI_lo,CI_hi), \\(x) round(x,4))) |&gt;\n  kbl(col.names = c(\"t_j\",\"n_j\",\"d_j\",\"c_j\",\"1-d/n\",\n                    \"Ŝ(t)\",\"Greenwood\",\"Var[Ŝ]\",\"SE\",\"95% Lo\",\"95% Hi\"),\n      align = \"c\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\", font_size = 11)\n\n\n\nTable 5.1: Manual KM calculation for a small dataset (n = 12)\n\n\n\n\n\n\nt_j\nn_j\nd_j\nc_j\n1-d/n\nŜ(t)\nGreenwood\nVar[Ŝ]\nSE\n95% Lo\n95% Hi\n\n\n\n\n1\n12\n1\n0\n0.9167\n0.9167\n0.0075758\n0.0063657\n0.0798\n0.7603\n1.0000\n\n\n2\n11\n1\n0\n0.9091\n0.8333\n0.0166667\n0.0115741\n0.1076\n0.6225\n1.0000\n\n\n3\n10\n1\n1\n0.9000\n0.7500\n0.0277778\n0.0156250\n0.1250\n0.5050\n0.9950\n\n\n4\n8\n1\n0\n0.8750\n0.6562\n0.0456349\n0.0196533\n0.1402\n0.3815\n0.9310\n\n\n7\n6\n1\n0\n0.8333\n0.5469\n0.0789683\n0.0236172\n0.1537\n0.2457\n0.8481\n\n\n8\n5\n1\n1\n0.8000\n0.4375\n0.1289683\n0.0246853\n0.1571\n0.1296\n0.7454\n\n\n10\n3\n1\n0\n0.6667\n0.2917\n0.2956349\n0.0251495\n0.1586\n0.0000\n0.6025\n\n\n14\n1\n1\n0\n0.0000\n0.0000\nInf\nNaN\nNaN\nNaN\nNaN",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>The Kaplan–Meier Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_km.html#greenwoods-formula",
+    "href": "unit2_km.html#greenwoods-formula",
+    "title": "5  The Kaplan–Meier Estimator",
+    "section": "5.3 Greenwood’s Formula",
+    "text": "5.3 Greenwood’s Formula\nThe variance of the KM estimator is given by Greenwood’s formula:\n\\[\\widehat{\\text{Var}}[\\hat{S}(t)] = [\\hat{S}(t)]^2 \\sum_{t_j \\leq t} \\frac{d_j}{n_j(n_j - d_j)}\\]\nA 95% pointwise confidence interval uses the linear (plain) scale:\n\\[\\hat{S}(t) \\pm 1.96 \\cdot \\widehat{\\text{SE}}[\\hat{S}(t)]\\]\nHowever, this can yield values outside \\([0,1]\\). The log-log (complementary log-log) transformation is preferred:\n\\[\\exp\\!\\left[\\log\\hat{S}(t) \\cdot \\exp\\!\\left(\\pm \\frac{z_{0.025}}{\\log\\hat{S}(t)} \\sqrt{\\widehat{\\text{Var}}[\\log(-\\log\\hat{S}(t))]}\\right)\\right]\\]\nThis always stays in \\([0,1]\\) and performs better in small samples.",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>The Kaplan–Meier Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_km.html#km-in-r-full-worked-example",
+    "href": "unit2_km.html#km-in-r-full-worked-example",
+    "title": "5  The Kaplan–Meier Estimator",
+    "section": "5.4 KM in R: Full Worked Example",
+    "text": "5.4 KM in R: Full Worked Example\n\ndata(lung)\nlung$SurvObj &lt;- Surv(lung$time, lung$status == 2)\nkm_fit &lt;- survfit(SurvObj ~ 1, data = lung)\n\nggsurvplot(km_fit,\n           data           = lung,\n           conf.int       = TRUE,\n           conf.int.fill  = \"#2C7BB6\",\n           conf.int.alpha = 0.15,\n           risk.table     = TRUE,\n           risk.table.col = \"strata\",\n           xlab           = \"Time (days)\",\n           ylab           = \"Survival Probability S(t)\",\n           title          = \"Overall Survival: NCCTG Lung Cancer Dataset\",\n           palette        = \"#2C7BB6\",\n           ggtheme        = theme_bw(base_size = 13),\n           surv.median.line = \"hv\",\n           break.time.by  = 100)\n\n\n\n\n\n\n\nFigure 5.1: Kaplan–Meier survival curve with 95% confidence band and risk table (NCCTG lung cancer data)\n\n\n\n\n\n\nkm_sum &lt;- summary(km_fit, times = seq(100, 900, by = 100))\ndata.frame(\n  Time     = km_sum$time,\n  At_Risk  = km_sum$n.risk,\n  Events   = km_sum$n.event,\n  Survival = round(km_sum$surv, 3),\n  Std_Err  = round(km_sum$std.err, 3),\n  Lower95  = round(km_sum$lower, 3),\n  Upper95  = round(km_sum$upper, 3)\n) |&gt;\n  kbl(col.names = c(\"Time\",\"n.risk\",\"n.event\",\"Ŝ(t)\",\"SE\",\"Lower 95%\",\"Upper 95%\"),\n      align = \"c\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\")\n\n\n\nTable 5.2: KM survival estimates at selected time points\n\n\n\n\n\n\nTime\nn.risk\nn.event\nŜ(t)\nSE\nLower 95%\nUpper 95%\n\n\n\n\n100\n196\n31\n0.864\n0.023\n0.821\n0.910\n\n\n200\n144\n41\n0.680\n0.031\n0.622\n0.744\n\n\n300\n92\n29\n0.531\n0.035\n0.467\n0.603\n\n\n400\n57\n25\n0.377\n0.036\n0.313\n0.454\n\n\n500\n41\n12\n0.293\n0.035\n0.232\n0.371\n\n\n600\n24\n10\n0.214\n0.033\n0.157\n0.290\n\n\n700\n16\n8\n0.142\n0.030\n0.094\n0.216\n\n\n800\n8\n7\n0.078\n0.025\n0.042\n0.145\n\n\n900\n3\n2\n0.050\n0.023\n0.021\n0.123",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>The Kaplan–Meier Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_km.html#stratified-km-analysis",
+    "href": "unit2_km.html#stratified-km-analysis",
+    "title": "5  The Kaplan–Meier Estimator",
+    "section": "5.5 Stratified KM Analysis",
+    "text": "5.5 Stratified KM Analysis\nWhen groups differ in survival, stratified KM curves reveal the pattern:\n\nkm_sex &lt;- survfit(SurvObj ~ sex, data = lung)\n\nggsurvplot(km_sex,\n           data        = lung,\n           conf.int    = TRUE,\n           pval        = TRUE,\n           pval.method = TRUE,\n           risk.table  = TRUE,\n           legend.labs = c(\"Male\",\"Female\"),\n           palette     = c(\"#D7191C\",\"#2C7BB6\"),\n           xlab        = \"Time (days)\",\n           ylab        = \"Survival Probability\",\n           title       = \"Survival by Sex: NCCTG Lung Cancer Data\",\n           ggtheme     = theme_bw(base_size = 13),\n           surv.median.line = \"hv\")\n\n\n\n\n\n\n\nFigure 5.2: KM curves by sex with log-rank p-value and risk table",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>The Kaplan–Meier Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_km.html#median-survival-time",
+    "href": "unit2_km.html#median-survival-time",
+    "title": "5  The Kaplan–Meier Estimator",
+    "section": "5.6 Median Survival Time",
+    "text": "5.6 Median Survival Time\nThe median survival time \\(\\hat{t}_{0.5}\\) is the smallest time at which \\(\\hat{S}(t) \\leq 0.5\\):\n\nprint(km_sex)   # shows median and 95% CI for each stratum\n\nCall: survfit(formula = SurvObj ~ sex, data = lung)\n\n        n events median 0.95LCL 0.95UCL\nsex=1 138    112    270     212     310\nsex=2  90     53    426     348     550\n\n\n\n\n\n\n\n\nHistorical Insights\n\n\n\nEdward L. Kaplan (1920–2006) and Paul Meier (1924–2011) submitted their now-famous paper to the Journal of the American Statistical Association in 1954 — only to have it returned twice for revisions over four years before publication in 1958. It went on to become one of the most-cited scientific papers of all time, with over 50,000 citations. The authors were unacquainted before their editor suggested they combine their independent but similar submissions into a single paper.\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“You can have data without information, but you cannot have information without data.”\n— Daniel Keys Moran",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>The Kaplan–Meier Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_actuarial.html",
+    "href": "unit2_actuarial.html",
+    "title": "6  Actuarial Method for Grouped Data",
+    "section": "",
+    "text": "6.1 The Actuarial Estimator\nWhen survival data arrive in grouped form — counts of deaths and withdrawals in successive time intervals — the actuarial (life table) method provides a computationally straightforward non-parametric estimate of \\(S(t)\\). It predates the Kaplan–Meier estimator by decades and underpins traditional demographic and insurance calculations.\nWithin each interval \\([t_j, t_{j+1})\\), denote:\nAssuming censoring occurs at the midpoint of the interval (the standard actuarial assumption):\n\\[\\hat{q}_j = \\frac{d_j}{l_j - c_j/2}, \\qquad \\hat{p}_j = 1 - \\hat{q}_j\\]\nThe estimated survival function at the end of interval \\(j\\) is:\n\\[\\hat{S}(t_j) = \\prod_{u=1}^{j} \\hat{p}_u\\]",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Actuarial Method for Grouped Data</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_actuarial.html#the-actuarial-estimator",
+    "href": "unit2_actuarial.html#the-actuarial-estimator",
+    "title": "6  Actuarial Method for Grouped Data",
+    "section": "",
+    "text": "\\(l_j\\) = number entering the interval\n\\(d_j\\) = number dying (events) in the interval\n\\(c_j\\) = number censored (withdrawn) in the interval\n\n\n\n\n\n\n6.1.1 Variance (Greenwood-type)\n\\[\\widehat{\\text{Var}}[\\hat{S}(t_j)] = [\\hat{S}(t_j)]^2 \\sum_{u=1}^{j} \\frac{\\hat{q}_u}{\\hat{p}_u (l_u - c_u/2)}\\]\n\nact &lt;- data.frame(\n  Interval = c(\"[0,6)\",\"[6,12)\",\"[12,18)\",\"[18,24)\",\"[24,30)\",\"[30,36)\"),\n  l_j  = c(250, 210, 174, 138, 106, 78),\n  d_j  = c(28,  24,  28,  24,  20,  16),\n  c_j  = c(12,  12,  8,   8,   8,   62)   # final interval: remaining censored\n)\n\nact &lt;- act |&gt;\n  mutate(\n    eff_n = l_j - c_j / 2,\n    q_hat = d_j / eff_n,\n    p_hat = 1 - q_hat,\n    S_hat = cumprod(p_hat),\n    gw_term = q_hat / (p_hat * eff_n),\n    var_S = S_hat^2 * cumsum(gw_term),\n    se_S  = sqrt(var_S),\n    CI_lo = pmax(0, S_hat - 1.96 * se_S),\n    CI_hi = pmin(1, S_hat + 1.96 * se_S)\n  )\n\nact |&gt;\n  mutate(across(c(eff_n,q_hat,p_hat,S_hat,se_S,CI_lo,CI_hi),\n                \\(x) round(x,3))) |&gt;\n  select(Interval,l_j,d_j,c_j,eff_n,q_hat,p_hat,S_hat,se_S,CI_lo,CI_hi) |&gt;\n  kbl(col.names = c(\"Interval\",\"l_j\",\"d_j\",\"c_j\",\"l_j - c_j/2\",\n                    \"q̂_j\",\"p̂_j\",\"Ŝ(t)\",\"SE\",\"Lo 95%\",\"Hi 95%\"),\n      align = \"c\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\", font_size = 11)\n\n\n\nTable 6.1: Actuarial life table estimation for grouped survival data\n\n\n\n\n\n\nInterval\nl_j\nd_j\nc_j\nl_j - c_j/2\nq̂_j\np̂_j\nŜ(t)\nSE\nLo 95%\nHi 95%\n\n\n\n\n[0,6)\n250\n28\n12\n244\n0.115\n0.885\n0.885\n0.020\n0.845\n0.925\n\n\n[6,12)\n210\n24\n12\n204\n0.118\n0.882\n0.781\n0.027\n0.728\n0.834\n\n\n[12,18)\n174\n28\n8\n170\n0.165\n0.835\n0.652\n0.032\n0.591\n0.714\n\n\n[18,24)\n138\n24\n8\n134\n0.179\n0.821\n0.536\n0.034\n0.469\n0.602\n\n\n[24,30)\n106\n20\n8\n102\n0.196\n0.804\n0.431\n0.034\n0.363\n0.498\n\n\n[30,36)\n78\n16\n62\n47\n0.340\n0.660\n0.284\n0.037\n0.211\n0.357\n\n\n\n\n\n\n\n\n\n\n\n# Midpoints for plotting\nact$t_mid &lt;- c(0,6,12,18,24,30)\n\nggplot(act, aes(x = t_mid, y = S_hat)) +\n  geom_step(colour = \"#2C7BB6\", linewidth = 1.3) +\n  geom_ribbon(aes(ymin = CI_lo, ymax = CI_hi), alpha = 0.15, fill = \"#2C7BB6\") +\n  geom_point(colour = \"#D7191C\", size = 2.5) +\n  scale_y_continuous(labels = scales::percent, limits = c(0,1)) +\n  labs(title = \"Actuarial Survival Estimate\",\n       x = \"Time (months)\", y = \"Survival Probability Ŝ(t)\")\n\n\n\n\n\n\n\nFigure 6.1: Actuarial survival estimate with 95% pointwise confidence band",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Actuarial Method for Grouped Data</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_actuarial.html#comparison-actuarial-vs-kaplanmeier",
+    "href": "unit2_actuarial.html#comparison-actuarial-vs-kaplanmeier",
+    "title": "6  Actuarial Method for Grouped Data",
+    "section": "6.2 Comparison: Actuarial vs Kaplan–Meier",
+    "text": "6.2 Comparison: Actuarial vs Kaplan–Meier\n\n\n\n\n\n\n\n\nFeature\nActuarial\nKaplan–Meier\n\n\n\n\nData format\nGrouped (interval counts)\nIndividual (exact times)\n\n\nCensoring assumption\nMidpoint of interval\nExact time known\n\n\nWhen useful\nLarge datasets, register data\nClinical/experimental studies\n\n\nConsistency\nYes\nYes\n\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“Facts are stubborn things, but statistics are pliable.”\n— Mark Twain",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Actuarial Method for Grouped Data</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_nelsona.html",
+    "href": "unit2_nelsona.html",
+    "title": "7  The Nelson–Aalen Estimator",
+    "section": "",
+    "text": "7.1 The Estimator\nThe Nelson–Aalen (NA) estimator is a non-parametric estimator of the cumulative hazard function \\(H(t)\\). Proposed by Wayne Nelson (1972) for reliability data and later formalised by Odd Aalen (1978) using counting-process theory, it provides an alternative to the Kaplan–Meier approach that is particularly useful in small samples and as a diagnostic tool.\nAt each observed event time \\(t_j\\) with \\(d_j\\) events and \\(n_j\\) subjects at risk:\n\\[\\hat{H}(t) = \\sum_{t_j \\leq t} \\frac{d_j}{n_j}\\]\nThe corresponding survival estimate is then:\n\\[\\tilde{S}(t) = \\exp\\{-\\hat{H}(t)\\}\\]\nThis is sometimes called the Fleming–Harrington estimator in the survival package.",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>The Nelson–Aalen Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_nelsona.html#the-estimator",
+    "href": "unit2_nelsona.html#the-estimator",
+    "title": "7  The Nelson–Aalen Estimator",
+    "section": "",
+    "text": "7.1.1 Variance\n\\[\\widehat{\\text{Var}}[\\hat{H}(t)] = \\sum_{t_j \\leq t} \\frac{d_j}{n_j^2}\\]",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>The Nelson–Aalen Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_nelsona.html#manual-calculation",
+    "href": "unit2_nelsona.html#manual-calculation",
+    "title": "7  The Nelson–Aalen Estimator",
+    "section": "7.2 Manual Calculation",
+    "text": "7.2 Manual Calculation\n\ntimes  &lt;- c(1, 2, 3, 3, 4, 5, 7, 8, 8, 10, 12, 14)\nevents &lt;- c(1, 1, 1, 0, 1, 0, 1, 1, 0,  1,  0,  1)\nuniq_et &lt;- unique(sort(times[events == 1]))\n\nna_tbl &lt;- data.frame(t_j = uniq_et)\nna_tbl$n_j  &lt;- sapply(na_tbl$t_j, \\(x) sum(times &gt;= x))\nna_tbl$d_j  &lt;- sapply(na_tbl$t_j, \\(x) sum(times == x & events == 1))\nna_tbl$incr &lt;- na_tbl$d_j / na_tbl$n_j\nna_tbl$H_t  &lt;- cumsum(na_tbl$incr)\nna_tbl$S_tilde &lt;- exp(-na_tbl$H_t)\nna_tbl$var_H   &lt;- cumsum(na_tbl$d_j / na_tbl$n_j^2)\n\nna_tbl |&gt;\n  mutate(across(where(is.numeric), \\(x) round(x, 4))) |&gt;\n  kbl(col.names = c(\"t_j\",\"n_j\",\"d_j\",\"d_j/n_j\",\"Ĥ(t)\",\"exp{-Ĥ(t)}\",\"Var[Ĥ(t)]\"),\n      align = \"c\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\")\n\n\n\nTable 7.1: Manual Nelson–Aalen calculation\n\n\n\n\n\n\nt_j\nn_j\nd_j\nd_j/n_j\nĤ(t)\nexp{-Ĥ(t)}\nVar[Ĥ(t)]\n\n\n\n\n1\n12\n1\n0.0833\n0.0833\n0.9200\n0.0069\n\n\n2\n11\n1\n0.0909\n0.1742\n0.8401\n0.0152\n\n\n3\n10\n1\n0.1000\n0.2742\n0.7601\n0.0252\n\n\n4\n8\n1\n0.1250\n0.3992\n0.6708\n0.0408\n\n\n7\n6\n1\n0.1667\n0.5659\n0.5678\n0.0686\n\n\n8\n5\n1\n0.2000\n0.7659\n0.4649\n0.1086\n\n\n10\n3\n1\n0.3333\n1.0992\n0.3331\n0.2197\n\n\n14\n1\n1\n1.0000\n2.0992\n0.1225\n1.2197",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>The Nelson–Aalen Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_nelsona.html#nelsonaalen-in-r",
+    "href": "unit2_nelsona.html#nelsonaalen-in-r",
+    "title": "7  The Nelson–Aalen Estimator",
+    "section": "7.3 Nelson–Aalen in R",
+    "text": "7.3 Nelson–Aalen in R\n\nna_fit &lt;- survfit(SurvObj ~ 1, data = lung, type = \"fh\")  # Fleming-Harrington\n\nna_df &lt;- data.frame(\n  time   = na_fit$time,\n  cumhaz = na_fit$cumhaz,\n  lo     = na_fit$cumhaz - 1.96 * sqrt(na_fit$cumhaz / na_fit$n.risk),\n  hi     = na_fit$cumhaz + 1.96 * sqrt(na_fit$cumhaz / na_fit$n.risk)\n)\n\nggplot(na_df, aes(x = time, y = cumhaz)) +\n  geom_step(colour = \"#2C7BB6\", linewidth = 1.2) +\n  geom_ribbon(aes(ymin = pmax(0, lo), ymax = hi),\n              fill = \"#2C7BB6\", alpha = 0.15) +\n  labs(title = \"Nelson–Aalen Cumulative Hazard Estimate\",\n       subtitle = \"NCCTG Lung Cancer Data\",\n       x = \"Time (days)\", y = expression(hat(H)(t)))\n\n\n\n\n\n\n\nFigure 7.1: Nelson–Aalen cumulative hazard estimate with confidence band",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>The Nelson–Aalen Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit2_nelsona.html#km-vs-nelsonaalen-which-to-use",
+    "href": "unit2_nelsona.html#km-vs-nelsonaalen-which-to-use",
+    "title": "7  The Nelson–Aalen Estimator",
+    "section": "7.4 KM vs Nelson–Aalen: Which to Use?",
+    "text": "7.4 KM vs Nelson–Aalen: Which to Use?\n\nkm_fit  &lt;- survfit(SurvObj ~ 1, data = lung)\nna_surv &lt;- exp(-na_fit$cumhaz)\n\ndf_comp &lt;- bind_rows(\n  data.frame(time = km_fit$time, surv = km_fit$surv, Method = \"Kaplan–Meier\"),\n  data.frame(time = na_fit$time, surv = na_surv,      Method = \"Nelson–Aalen\")\n)\n\nggplot(df_comp, aes(x = time, y = surv, colour = Method)) +\n  geom_step(linewidth = 1.1) +\n  scale_colour_manual(values = c(\"Kaplan–Meier\" = \"#2C7BB6\",\n                                 \"Nelson–Aalen\" = \"#D7191C\")) +\n  labs(title = \"KM vs Nelson–Aalen Survival Estimates\",\n       x = \"Time (days)\", y = \"S(t)\",\n       colour = NULL) +\n  theme(legend.position = \"bottom\")\n\n\n\n\n\n\n\nFigure 7.2: KM and Nelson–Aalen survival estimates: differences emerge in small samples\n\n\n\n\n\n\n\n\n\n\n\nWhen to Prefer Nelson–Aalen\n\n\n\nThe NA estimator is slightly less biased than KM in small samples (KM can be zero if the last observation is an event; NA never reaches zero). In practice, both give very similar results for large samples. The NA estimator is the natural output when cumulative hazards are of primary interest — e.g., when checking proportional hazards.\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“Without data, you’re just another person with an opinion.”\n— W. Edwards Deming",
+    "crumbs": [
+      "UNIT II: Estimating Survival",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>The Nelson–Aalen Estimator</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_parametric.html",
+    "href": "unit3_parametric.html",
+    "title": "8  Fitting Parametric Survival Distributions",
+    "section": "",
+    "text": "8.1 Diagnostic Plots for Model Selection\nNon-parametric estimators like Kaplan–Meier are flexible and assumption-free, but parametric models offer important advantages: smooth hazard estimates, extrapolation beyond the data range, easy computation of mean survival, and a parsimonious description of the data when the model is appropriate. This chapter covers model selection using diagnostic plots, maximum likelihood estimation, and the comparison of parametric families.\nBefore fitting, visual diagnostics indicate which parametric family is plausible.",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Fitting Parametric Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_parametric.html#diagnostic-plots-for-model-selection",
+    "href": "unit3_parametric.html#diagnostic-plots-for-model-selection",
+    "title": "8  Fitting Parametric Survival Distributions",
+    "section": "",
+    "text": "8.1.1 Exponential Check: \\(\\hat{H}(t)\\) vs \\(t\\)\nIf \\(T \\sim \\text{Exp}(\\lambda)\\), then \\(H(t) = \\lambda t\\) — a straight line through the origin.\n\n\n8.1.2 Weibull Check: \\(\\log\\hat{H}(t)\\) vs \\(\\log t\\)\n\\[\\log H(t) = \\gamma \\log t - \\gamma \\log \\lambda\\]\nA straight line with slope \\(\\gamma\\) (the shape parameter).\n\n\n8.1.3 Log-Normal Check: \\(\\Phi^{-1}[\\hat{F}(t)]\\) vs \\(\\log t\\)\nIf \\(\\log T \\sim N(\\mu, \\sigma^2)\\), plotting \\(\\Phi^{-1}[1 - \\hat{S}(t)]\\) against \\(\\log t\\) gives a straight line with slope \\(1/\\sigma\\) and intercept \\(-\\mu/\\sigma\\).\n\nkm_fit &lt;- survfit(Surv(time, status == 2) ~ 1, data = lung)\nt_vals &lt;- km_fit$time[km_fit$n.event &gt; 0]\nH_vals &lt;- -log(km_fit$surv[km_fit$n.event &gt; 0])\nF_vals &lt;-  1  - km_fit$surv[km_fit$n.event &gt; 0]\n\npar(mfrow = c(2, 2), mar = c(4,4,3,1))\n\n# 1. Exponential\nplot(t_vals, H_vals, type = \"s\", col = \"#2C7BB6\", lwd = 2,\n     xlab = \"t\", ylab = expression(hat(H)(t)),\n     main = \"Exponential Check\\nH(t) vs t\")\nabline(lm(H_vals ~ t_vals), col = \"#D7191C\", lty = 2, lwd = 1.5)\n\n# 2. Weibull\nlH  &lt;- log(H_vals);  lt &lt;- log(t_vals)\nplot(lt, lH, type = \"p\", col = \"#2C7BB6\", pch = 16, cex = 0.6,\n     xlab = \"log(t)\", ylab = \"log H(t)\",\n     main = \"Weibull Check\\nlog H(t) vs log(t)\")\nabline(lm(lH ~ lt), col = \"#D7191C\", lty = 2, lwd = 1.5)\n\n# 3. Log-Normal\nz_vals &lt;- qnorm(pmin(F_vals, 0.9999))\nplot(log(t_vals), z_vals, type = \"p\", col = \"#2C7BB6\", pch = 16, cex = 0.6,\n     xlab = \"log(t)\", ylab = expression(Phi^{-1}(F(t))),\n     main = \"Log-Normal Check\\nΦ⁻¹(F(t)) vs log(t)\")\nabline(lm(z_vals ~ log(t_vals)), col = \"#D7191C\", lty = 2, lwd = 1.5)\n\n# 4. Log-Logistic\nlo_vals &lt;- log(F_vals / (1 - F_vals))\nplot(log(t_vals), lo_vals, type = \"p\", col = \"#2C7BB6\", pch = 16, cex = 0.6,\n     xlab = \"log(t)\", ylab = \"logit F(t)\",\n     main = \"Log-Logistic Check\\nlogit F(t) vs log(t)\")\nabline(lm(lo_vals ~ log(t_vals)), col = \"#D7191C\", lty = 2, lwd = 1.5)\n\n\n\n\n\n\n\nFigure 8.1: Diagnostic plots for model selection (NCCTG lung cancer data)",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Fitting Parametric Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_parametric.html#maximum-likelihood-estimation",
+    "href": "unit3_parametric.html#maximum-likelihood-estimation",
+    "title": "8  Fitting Parametric Survival Distributions",
+    "section": "8.2 Maximum Likelihood Estimation",
+    "text": "8.2 Maximum Likelihood Estimation\nWith right-censored data, the likelihood is:\n\\[L(\\boldsymbol{\\theta}) = \\prod_{i: \\delta_i=1} f(t_i;\\boldsymbol{\\theta}) \\cdot \\prod_{i: \\delta_i=0} S(t_i;\\boldsymbol{\\theta}) = \\prod_{i=1}^n [h(t_i;\\boldsymbol{\\theta})]^{\\delta_i} S(t_i;\\boldsymbol{\\theta})\\]\nFor the exponential model, the MLE of \\(\\lambda\\) has the closed form:\n\\[\\hat{\\lambda} = \\frac{r}{\\sum_{i=1}^n t_i}\\]\nwhere \\(r = \\sum \\delta_i\\) is the number of observed events and \\(\\sum t_i\\) is the total follow-up time.\nFor Weibull, Gamma, and Log-Normal, numerical optimisation is required.",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Fitting Parametric Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_parametric.html#fitting-with-flexsurv",
+    "href": "unit3_parametric.html#fitting-with-flexsurv",
+    "title": "8  Fitting Parametric Survival Distributions",
+    "section": "8.3 Fitting with flexsurv",
+    "text": "8.3 Fitting with flexsurv\n\nfit_exp  &lt;- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = \"exponential\")\nfit_weib &lt;- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = \"weibull\")\nfit_lnrm &lt;- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = \"lnorm\")\nfit_gam  &lt;- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = \"gamma\")\nfit_ggam &lt;- flexsurvreg(Surv(time, status==2) ~ 1, data = lung, dist = \"gengamma\")\n\n# Model comparison\naic_df &lt;- data.frame(\n  Model  = c(\"Exponential\",\"Weibull\",\"Log-Normal\",\"Gamma\",\"Gen. Gamma\"),\n  LogLik = c(logLik(fit_exp),logLik(fit_weib),logLik(fit_lnrm),\n              logLik(fit_gam),logLik(fit_ggam)),\n  AIC    = c(AIC(fit_exp),AIC(fit_weib),AIC(fit_lnrm),\n             AIC(fit_gam),AIC(fit_ggam)),\n  BIC    = c(BIC(fit_exp),BIC(fit_weib),BIC(fit_lnrm),\n             BIC(fit_gam),BIC(fit_ggam))\n) |&gt; mutate(across(where(is.numeric), \\(x) round(x, 2)))\n\nkbl(aic_df, caption = \"AIC/BIC comparison of parametric survival models\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\")\n\n\nAIC/BIC comparison of parametric survival models\n\n\nModel\nLogLik\nAIC\nBIC\n\n\n\n\nExponential\n-1162.34\n2326.68\n2330.11\n\n\nWeibull\n-1153.85\n2311.70\n2318.56\n\n\nLog-Normal\n-1169.27\n2342.54\n2349.40\n\n\nGamma\n-1154.73\n2313.47\n2320.33\n\n\nGen. Gamma\n-1153.69\n2313.38\n2323.67\n\n\n\n\n\n\n\n\nplot(fit_weib, col = \"#D7191C\", lwd = 2, ci = FALSE,\n     xlab = \"Time (days)\", ylab = \"S(t)\",\n     main = \"Parametric Fits vs Kaplan–Meier\")\nlines(fit_exp,  col = \"#2C7BB6\",  lwd = 2, ci = FALSE)\nlines(fit_lnrm, col = \"#1A9641\",  lwd = 2, ci = FALSE)\nlines(fit_gam,  col = \"#FF7F00\",  lwd = 2, ci = FALSE)\nlegend(\"topright\",\n       legend = c(\"KM (nonparametric)\",\"Weibull\",\"Exponential\",\n                  \"Log-Normal\",\"Gamma\"),\n       col    = c(\"black\",\"#D7191C\",\"#2C7BB6\",\"#1A9641\",\"#FF7F00\"),\n       lwd    = 2, bty = \"n\")\n\n\n\n\n\n\n\nFigure 8.2: Fitted parametric survival curves vs Kaplan–Meier estimate\n\n\n\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“All models are wrong, but some are useful.”\n— George E.P. Box",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Fitting Parametric Survival Distributions</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_gof.html",
+    "href": "unit3_gof.html",
+    "title": "9  Goodness-of-Fit Tests",
+    "section": "",
+    "text": "9.1 Graphical Assessment: PP and QQ Plots\nAfter selecting and fitting a parametric model, we must assess whether it adequately describes the data. This chapter presents graphical and formal statistical tests for goodness-of-fit.",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Goodness-of-Fit Tests</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_gof.html#graphical-assessment-pp-and-qq-plots",
+    "href": "unit3_gof.html#graphical-assessment-pp-and-qq-plots",
+    "title": "9  Goodness-of-Fit Tests",
+    "section": "",
+    "text": "9.1.1 Probability–Probability (PP) Plot\nPlot empirical \\(\\hat{F}(t_j)\\) vs fitted \\(F(t_j;\\hat{\\theta})\\). Perfect fit: points on the diagonal.\n\n\n9.1.2 Quantile–Quantile (QQ) Plot\nPlot empirical quantiles vs fitted quantiles. Deviations reveal systematic misfit.\n\nkm_F &lt;- 1 - km_fit$surv\nt_km &lt;- km_fit$time\n\nshape_est &lt;- exp(fit_weib$coefficients[\"shape\"])\nscale_est &lt;- exp(fit_weib$coefficients[\"scale\"])\nweib_F    &lt;- pweibull(t_km, shape = shape_est, scale = scale_est)\n\nggplot(data.frame(Fitted = weib_F, Empirical = km_F),\n       aes(x = Fitted, y = Empirical)) +\n  geom_point(colour = \"#2C7BB6\", alpha = 0.6, size = 1.5) +\n  geom_abline(slope = 1, intercept = 0, colour = \"#D7191C\",\n              linetype = \"dashed\", linewidth = 1) +\n  labs(title = \"Probability–Probability Plot: Weibull Fit\",\n       x = \"Fitted F(t;  θ̂)\", y = \"Empirical F̂(t)\")\n\n\n\n\n\n\n\nFigure 9.1: PP plot: Weibull fit vs empirical CDF (lung data)",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Goodness-of-Fit Tests</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_gof.html#kolmogorovsmirnov-statistic",
+    "href": "unit3_gof.html#kolmogorovsmirnov-statistic",
+    "title": "9  Goodness-of-Fit Tests",
+    "section": "9.2 Kolmogorov–Smirnov Statistic",
+    "text": "9.2 Kolmogorov–Smirnov Statistic\n\\[D_n = \\sup_t |\\hat{F}(t) - F(t;\\hat{\\theta})|\\]\nFor uncensored data, the KS statistic compares the empirical CDF to the fitted CDF. With censored data, a modified statistic is used (Koziol–Green). Under \\(H_0\\) (correct model with parameters estimated from data), critical values differ from the standard KS table — parametric bootstrap is recommended.",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Goodness-of-Fit Tests</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_gof.html#chi-square-goodness-of-fit",
+    "href": "unit3_gof.html#chi-square-goodness-of-fit",
+    "title": "9  Goodness-of-Fit Tests",
+    "section": "9.3 Chi-Square Goodness-of-Fit",
+    "text": "9.3 Chi-Square Goodness-of-Fit\nDivide the time axis into \\(k\\) intervals. In interval \\(j\\):\n\\[O_j = \\text{observed events}, \\qquad E_j = \\hat{S}(t_{j-1}) - \\hat{S}(t_j) \\text{ (fitted)}\\]\n\\[\\chi^2 = \\sum_{j=1}^k \\frac{(O_j - E_j)^2}{E_j} \\sim \\chi^2_{k-p-1}\\]\nwhere \\(p\\) is the number of estimated parameters.\n\n# Group failures into intervals\nbreaks &lt;- quantile(lung$time[lung$status==2], probs = seq(0,1,by=0.2))\nlung_ev &lt;- lung[lung$status==2,]\nobs_cnt &lt;- hist(lung_ev$time, breaks = breaks, plot = FALSE)$counts\n\n# Expected under Weibull\nexp_prob &lt;- diff(pweibull(breaks, shape=shape_est, scale=scale_est))\nexp_cnt  &lt;- exp_prob * nrow(lung_ev)\n\nchi2 &lt;- sum((obs_cnt - exp_cnt)^2 / exp_cnt)\ndf   &lt;- length(obs_cnt) - 1 - 2  # k groups - 1 - 2 estimated params\n\ndata.frame(\n  Interval = paste0(\"[\", round(breaks[-length(breaks)]),\",\",\n                    round(breaks[-1]),\")\"),\n  Observed = obs_cnt,\n  Expected = round(exp_cnt, 1),\n  Contrib  = round((obs_cnt - exp_cnt)^2 / exp_cnt, 3)\n) |&gt;\n  kbl(caption = sprintf(\"Chi-square GOF: χ² = %.2f, df = %d, p = %.3f\",\n                        chi2, df, pchisq(chi2, df, lower.tail=FALSE))) |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\")\n\n\nChi-square GOF: χ² = 11.66, df = 2, p = 0.003\n\n\n\nInterval\nObserved\nExpected\nContrib\n\n\n\n\n20%\n[5,107)\n34\n24.8\n3.411\n\n\n40%\n[107,183)\n32\n21.8\n4.735\n\n\n60%\n[183,289)\n33\n28.8\n0.621\n\n\n80%\n[289,445)\n33\n33.5\n0.007\n\n\n100%\n[445,883)\n33\n44.3\n2.882\n\n\n\n\n\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“In God we trust. All others must bring data.”\n— W. Edwards Deming",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Goodness-of-Fit Tests</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_comparison.html",
+    "href": "unit3_comparison.html",
+    "title": "10  Comparing Survival Experiences",
+    "section": "",
+    "text": "10.1 The Log-Rank Test\nA central question in many studies is whether two or more groups differ in their survival experience. This chapter presents the major non-parametric tests for comparing survival curves.\nThe log-rank test (Mantel–Cox, 1966) is the standard non-parametric test for comparing two or more survival curves. It is most powerful under the proportional hazards alternative.",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>10</span>  <span class='chapter-title'>Comparing Survival Experiences</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_comparison.html#the-log-rank-test",
+    "href": "unit3_comparison.html#the-log-rank-test",
+    "title": "10  Comparing Survival Experiences",
+    "section": "",
+    "text": "10.1.1 Two-Sample Log-Rank\nAt each observed event time \\(t_j\\), construct a \\(2 \\times 2\\) table:\n\n\n\n\nEvents\nNon-events\nTotal\n\n\n\n\nGroup 1\n\\(O_{1j}\\)\n\\(n_{1j}-O_{1j}\\)\n\\(n_{1j}\\)\n\n\nGroup 2\n\\(O_{2j}\\)\n\\(n_{2j}-O_{2j}\\)\n\\(n_{2j}\\)\n\n\nTotal\n\\(d_j\\)\n\\(n_j - d_j\\)\n\\(n_j\\)\n\n\n\nExpected events in group 1 at \\(t_j\\): \\(E_{1j} = d_j \\cdot n_{1j}/n_j\\)\nTest statistic:\n\\[U = \\sum_j (O_{1j} - E_{1j}), \\qquad V = \\sum_j \\frac{n_{1j} n_{2j} d_j (n_j - d_j)}{n_j^2 (n_j - 1)}\\]\n\\[\\chi^2_{LR} = U^2 / V \\sim \\chi^2_1 \\quad \\text{under } H_0: S_1(t) = S_2(t)\\]\n\n\n10.1.2 Mantel–Haenszel Form\nThe Mantel–Haenszel statistic is equivalent to the log-rank test:\n\\[\\chi^2_{MH} = \\frac{[\\sum_j(O_{1j} - E_{1j})]^2}{\\sum_j V_j}\\]",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>10</span>  <span class='chapter-title'>Comparing Survival Experiences</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_comparison.html#weighted-tests",
+    "href": "unit3_comparison.html#weighted-tests",
+    "title": "10  Comparing Survival Experiences",
+    "section": "10.2 Weighted Tests",
+    "text": "10.2 Weighted Tests\nThe general weighted log-rank statistic is:\n\\[\\chi^2_w = \\frac{[\\sum_j w_j(O_{1j}-E_{1j})]^2}{\\sum_j w_j^2 V_j}\\]\n\n\n\n\n\n\n\n\nTest\nWeights \\(w_j\\)\nMost powerful against\n\n\n\n\nLog-rank (Mantel-Cox)\n\\(1\\)\nProportional hazards\n\n\nWilcoxon (Breslow–Gehan)\n\\(n_j\\)\nEarly differences\n\n\nTarone–Ware\n\\(\\sqrt{n_j}\\)\nIntermediate\n\n\nFleming–Harrington(\\(\\rho\\))\n\\([\\hat{S}(t_j^-)]^\\rho\\)\nLate differences (\\(\\rho=1\\))\n\n\n\n\n# Log-rank (rho = 0)\nlr  &lt;- survdiff(Surv(time, status==2) ~ sex, data = lung, rho = 0)\n# Wilcoxon / Breslow (rho = 1)\nwb  &lt;- survdiff(Surv(time, status==2) ~ sex, data = lung, rho = 1)\n\ncat(\"=== Log-Rank Test ===\\n\"); print(lr)\n\n=== Log-Rank Test ===\n\n\nCall:\nsurvdiff(formula = Surv(time, status == 2) ~ sex, data = lung, \n    rho = 0)\n\n        N Observed Expected (O-E)^2/E (O-E)^2/V\nsex=1 138      112     91.6      4.55      10.3\nsex=2  90       53     73.4      5.68      10.3\n\n Chisq= 10.3  on 1 degrees of freedom, p= 0.001 \n\ncat(\"\\n=== Wilcoxon (Breslow) Test ===\\n\"); print(wb)\n\n\n=== Wilcoxon (Breslow) Test ===\n\n\nCall:\nsurvdiff(formula = Surv(time, status == 2) ~ sex, data = lung, \n    rho = 1)\n\n        N Observed Expected (O-E)^2/E (O-E)^2/V\nsex=1 138     70.4     55.6      3.95      12.7\nsex=2  90     28.7     43.5      5.04      12.7\n\n Chisq= 12.7  on 1 degrees of freedom, p= 4e-04",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>10</span>  <span class='chapter-title'>Comparing Survival Experiences</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_comparison.html#k-sample-test",
+    "href": "unit3_comparison.html#k-sample-test",
+    "title": "10  Comparing Survival Experiences",
+    "section": "10.3 k-Sample Test",
+    "text": "10.3 k-Sample Test\nFor \\(k &gt; 2\\) groups, the generalised Mantel–Haenszel statistic:\n\\[\\chi^2 = \\mathbf{U}^T \\hat{\\boldsymbol{\\Sigma}}^{-1} \\mathbf{U} \\sim \\chi^2_{k-1}\\]\n\nlr_ecog &lt;- survdiff(Surv(time, status==2) ~ ph.ecog, data = lung)\nprint(lr_ecog)\n\nCall:\nsurvdiff(formula = Surv(time, status == 2) ~ ph.ecog, data = lung)\n\nn=227, 1 observation deleted due to missingness.\n\n            N Observed Expected (O-E)^2/E (O-E)^2/V\nph.ecog=0  63       37   54.153    5.4331    8.2119\nph.ecog=1 113       82   83.528    0.0279    0.0573\nph.ecog=2  50       44   26.147   12.1893   14.6491\nph.ecog=3   1        1    0.172    3.9733    4.0040\n\n Chisq= 22  on 3 degrees of freedom, p= 7e-05 \n\n\n\nlung2 &lt;- lung |&gt; filter(!is.na(ph.ecog))\nkm_ecog &lt;- survfit(Surv(time, status==2) ~ ph.ecog, data = lung2)\n\nggsurvplot(km_ecog,\n           data        = lung2,\n           pval        = TRUE,\n           pval.method = TRUE,\n           conf.int    = FALSE,\n           risk.table  = TRUE,\n           legend.labs = paste(\"ECOG\", sort(unique(lung2$ph.ecog))),\n           palette     = c(\"#2C7BB6\",\"#1A9641\",\"#D7191C\",\"#FF7F00\"),\n           xlab        = \"Time (days)\", ylab = \"S(t)\",\n           title       = \"Survival by ECOG Performance Status\",\n           ggtheme     = theme_bw(base_size = 13))\n\n\n\n\n\n\n\nFigure 10.1: KM curves by ECOG performance status with log-rank p-value",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>10</span>  <span class='chapter-title'>Comparing Survival Experiences</span>"
+    ]
+  },
+  {
+    "objectID": "unit3_comparison.html#comparison-of-two-life-tables",
+    "href": "unit3_comparison.html#comparison-of-two-life-tables",
+    "title": "10  Comparing Survival Experiences",
+    "section": "10.4 Comparison of Two Life Tables",
+    "text": "10.4 Comparison of Two Life Tables\nFor two independent cohorts with complete mortality data, we test \\(H_0: q_{1x} = q_{2x}\\) at each age \\(x\\) using the normal approximation for proportions.\n\n\n\n\n\n\nChoice of Test\n\n\n\nUse the log-rank test when you expect proportional hazards (constant hazard ratio over time). Use Wilcoxon when group differences are largest early in follow-up. If curves cross (non-proportional hazards), no single weighted log-rank test is uniformly powerful — consider max-combo tests or the restricted mean survival time approach.\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“Errors using inadequate data are much less than those using no data at all.”\n— Charles Babbage",
+    "crumbs": [
+      "UNIT III: Parametric Models & Comparisons",
+      "<span class='chapter-number'>10</span>  <span class='chapter-title'>Comparing Survival Experiences</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_cox.html",
+    "href": "unit4_cox.html",
+    "title": "11  The Cox Proportional Hazards Model",
+    "section": "",
+    "text": "11.1 The Model\nThe Cox model (1972) is the workhorse of modern survival analysis. It allows the joint effect of multiple covariates on survival to be estimated without specifying the shape of the baseline hazard — a crucial advantage in practice, where the hazard form is rarely known.\nFor a subject with covariate vector \\(\\mathbf{x} = (x_1,\\ldots,x_p)^T\\):\n\\[h(t;\\mathbf{x}) = h_0(t)\\exp(\\beta_1 x_1 + \\cdots + \\beta_p x_p) = h_0(t)\\exp(\\boldsymbol{\\beta}^T\\mathbf{x})\\]\nKey property — Proportional Hazards:\n\\[\\frac{h(t;\\mathbf{x})}{h(t;\\mathbf{x}^*)} = \\exp[\\boldsymbol{\\beta}^T(\\mathbf{x} - \\mathbf{x}^*)]\\]\nThe hazard ratio is constant over time — it does not depend on \\(t\\).",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>The Cox Proportional Hazards Model</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_cox.html#the-model",
+    "href": "unit4_cox.html#the-model",
+    "title": "11  The Cox Proportional Hazards Model",
+    "section": "",
+    "text": "\\(h_0(t)\\) is the baseline hazard — the hazard when all covariates are zero\n\\(\\exp(\\boldsymbol{\\beta}^T\\mathbf{x})\\) is the relative hazard (or risk score)\n\\(\\beta_j\\) is the log hazard ratio for a one-unit increase in \\(x_j\\), holding others constant",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>The Cox Proportional Hazards Model</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_cox.html#coxs-partial-likelihood",
+    "href": "unit4_cox.html#coxs-partial-likelihood",
+    "title": "11  The Cox Proportional Hazards Model",
+    "section": "11.2 Cox’s Partial Likelihood",
+    "text": "11.2 Cox’s Partial Likelihood\nCox’s insight was that \\(\\boldsymbol{\\beta}\\) can be estimated without knowing \\(h_0(t)\\). At each ordered event time \\(t_j\\), the probability that subject \\((j)\\) (the one who failed) is the one who failed, given that exactly one failure occurred in the risk set \\(\\mathcal{R}(t_j)\\):\n\\[L_j(\\boldsymbol{\\beta}) = \\frac{\\exp(\\boldsymbol{\\beta}^T \\mathbf{x}_{(j)})}{\\sum_{l \\in \\mathcal{R}(t_j)} \\exp(\\boldsymbol{\\beta}^T \\mathbf{x}_l)}\\]\nThe partial likelihood is \\(L_P(\\boldsymbol{\\beta}) = \\prod_{j=1}^k L_j(\\boldsymbol{\\beta})\\).\nMaximising \\(\\log L_P(\\boldsymbol{\\beta})\\) gives \\(\\hat{\\boldsymbol{\\beta}}\\), which is consistent and asymptotically normal.",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>The Cox Proportional Hazards Model</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_cox.html#fitting-the-cox-model-in-r",
+    "href": "unit4_cox.html#fitting-the-cox-model-in-r",
+    "title": "11  The Cox Proportional Hazards Model",
+    "section": "11.3 Fitting the Cox Model in R",
+    "text": "11.3 Fitting the Cox Model in R\n\ncox_fit &lt;- coxph(Surv(time, status==2) ~ age + sex + ph.ecog + ph.karno + wt.loss,\n                 data = lung)\nsummary(cox_fit)\n\nCall:\ncoxph(formula = Surv(time, status == 2) ~ age + sex + ph.ecog + \n    ph.karno + wt.loss, data = lung)\n\n  n= 213, number of events= 151 \n   (15 observations deleted due to missingness)\n\n              coef exp(coef)  se(coef)      z Pr(&gt;|z|)    \nage       0.015157  1.015273  0.009763  1.553 0.120538    \nsex      -0.631422  0.531835  0.177134 -3.565 0.000364 ***\nph.ecog   0.740204  2.096364  0.191332  3.869 0.000109 ***\nph.karno  0.015251  1.015368  0.009797  1.557 0.119553    \nwt.loss  -0.009298  0.990745  0.006699 -1.388 0.165168    \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n         exp(coef) exp(-coef) lower .95 upper .95\nage         1.0153     0.9850    0.9960    1.0349\nsex         0.5318     1.8803    0.3758    0.7526\nph.ecog     2.0964     0.4770    1.4408    3.0502\nph.karno    1.0154     0.9849    0.9961    1.0351\nwt.loss     0.9907     1.0093    0.9778    1.0038\n\nConcordance= 0.64  (se = 0.026 )\nLikelihood ratio test= 33.53  on 5 df,   p=3e-06\nWald test            = 32.27  on 5 df,   p=5e-06\nScore (logrank) test = 32.83  on 5 df,   p=4e-06\n\n\n\nggforest(cox_fit, data = lung,\n         main = \"Cox PH Model: Hazard Ratios (Lung Cancer Data)\")\n\n\n\n\n\n\n\nFigure 11.1: Forest plot of hazard ratios from the Cox model",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>The Cox Proportional Hazards Model</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_cox.html#interpretation-of-coefficients",
+    "href": "unit4_cox.html#interpretation-of-coefficients",
+    "title": "11  The Cox Proportional Hazards Model",
+    "section": "11.4 Interpretation of Coefficients",
+    "text": "11.4 Interpretation of Coefficients\n\ntidy(cox_fit, exponentiate = TRUE, conf.int = TRUE) |&gt;\n  mutate(\n    term = c(\"Age (per year)\",\"Sex (female vs male)\",\n             \"ECOG status\",\"Karnofsky score\",\"Weight loss\"),\n    across(where(is.numeric), \\(x) round(x, 3))\n  ) |&gt;\n  select(term, estimate, conf.low, conf.high, p.value) |&gt;\n  kbl(col.names = c(\"Covariate\",\"HR\",\"Lower 95%\",\"Upper 95%\",\"p-value\"),\n      align = \"lcccc\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  column_spec(2:4, bold = TRUE)\n\n\n\nTable 11.1: Estimated hazard ratios with 95% confidence intervals\n\n\n\n\n\n\nCovariate\nHR\nLower 95%\nUpper 95%\np-value\n\n\n\n\nAge (per year)\n1.015\n0.996\n1.035\n0.121\n\n\nSex (female vs male)\n0.532\n0.376\n0.753\n0.000\n\n\nECOG status\n2.096\n1.441\n3.050\n0.000\n\n\nKarnofsky score\n1.015\n0.996\n1.035\n0.120\n\n\nWeight loss\n0.991\n0.978\n1.004\n0.165\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nInterpreting Hazard Ratios\n\n\n\n\nHR = 1: no association\nHR &gt; 1: increased hazard (worse survival) per unit increase in covariate\nHR &lt; 1: decreased hazard (better survival) — protective factor\n\nExample: sex HR ≈ 0.59 means female patients have a 41% lower risk of death compared to males at any time point (95% CI: 0.42–0.82).",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>The Cox Proportional Hazards Model</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_cox.html#testing-the-proportional-hazards-assumption",
+    "href": "unit4_cox.html#testing-the-proportional-hazards-assumption",
+    "title": "11  The Cox Proportional Hazards Model",
+    "section": "11.5 Testing the Proportional Hazards Assumption",
+    "text": "11.5 Testing the Proportional Hazards Assumption\nThe PH assumption can be tested via Schoenfeld residuals: under PH, the scaled Schoenfeld residuals for covariate \\(j\\) should be uncorrelated with time.\n\nph_test &lt;- cox.zph(cox_fit)\nprint(ph_test)\n\n         chisq df     p\nage      0.186  1 0.666\nsex      2.059  1 0.151\nph.ecog  1.359  1 0.244\nph.karno 4.916  1 0.027\nwt.loss  0.110  1 0.740\nGLOBAL   7.174  5 0.208\n\nggcoxzph(ph_test, ggtheme = theme_bw(base_size = 12))\n\n\n\n\n\n\n\nFigure 11.2: Schoenfeld residuals test for the PH assumption\n\n\n\n\n\n\n\n\n\n\n\nWhat to Do When PH Is Violated\n\n\n\nIf the global test or individual covariate test is significant (\\(p &lt; 0.05\\)), PH is violated. Options:\n\nStratify on the violating covariate: coxph(Surv ~ x + strata(z))\nAdd a time-interaction term: x:log(time)\nUse an accelerated failure time (AFT) model (no PH assumption)\nFlexible parametric models (e.g., Royston–Parmar spline models)",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>The Cox Proportional Hazards Model</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_cox.html#adjusted-survival-curves-from-cox-model",
+    "href": "unit4_cox.html#adjusted-survival-curves-from-cox-model",
+    "title": "11  The Cox Proportional Hazards Model",
+    "section": "11.6 Adjusted Survival Curves from Cox Model",
+    "text": "11.6 Adjusted Survival Curves from Cox Model\n\nnewdat &lt;- data.frame(\n  age      = rep(mean(lung$age, na.rm=TRUE), 2),\n  sex      = c(1, 2),\n  ph.ecog  = c(1, 1),\n  ph.karno = rep(mean(lung$ph.karno, na.rm=TRUE), 2),\n  wt.loss  = rep(mean(lung$wt.loss, na.rm=TRUE), 2)\n)\ncox_surv &lt;- survfit(cox_fit, newdata = newdat)\n\nggsurvplot(cox_surv,\n           data        = newdat,\n           legend.labs = c(\"Male (adj.)\",\"Female (adj.)\"),\n           palette     = c(\"#D7191C\",\"#2C7BB6\"),\n           conf.int    = TRUE,\n           xlab        = \"Time (days)\", ylab = \"S(t)\",\n           title       = \"Adjusted Survival by Sex (Cox Model, other covariates at mean)\",\n           ggtheme     = theme_bw(base_size = 13))\n\n\n\n\n\n\n\nFigure 11.3: Adjusted survival curves by sex from the Cox model (covariates at mean)\n\n\n\n\n\n\n\n\n\n\n\nHistorical Insights\n\n\n\nSir David Roxbee Cox (1924–2022) was arguably the most influential statistician of the 20th century. He proposed the proportional hazards model in a landmark 1972 paper in the Journal of the Royal Statistical Society. The paper introduced both the model and the concept of partial likelihood — a method of inference so elegant and novel that it required a completely new theoretical framework to justify. Cox was knighted in 1985 and received virtually every major statistical prize. The Cox model is among the most-cited works in all of science.\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“The combination of some data and an aching desire for an answer does not ensure that a reasonable answer can be extracted from a given body of data.”\n— John W. Tukey",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>The Cox Proportional Hazards Model</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_covariates.html",
+    "href": "unit4_covariates.html",
+    "title": "12  Concomitant Variables and Model Building",
+    "section": "",
+    "text": "12.1 Multiplicative vs Additive Models\nSelecting and interpreting covariate effects is as important as fitting the model. This chapter covers additive and multiplicative hazard models, age-of-onset distributions, and strategies for covariate selection in survival models.",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Concomitant Variables and Model Building</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_covariates.html#multiplicative-vs-additive-models",
+    "href": "unit4_covariates.html#multiplicative-vs-additive-models",
+    "title": "12  Concomitant Variables and Model Building",
+    "section": "",
+    "text": "12.1.1 Proportional Hazards (Multiplicative)\n\\[h(t;\\mathbf{x}) = h_0(t) \\exp(\\boldsymbol{\\beta}^T \\mathbf{x})\\]\nCovariates act multiplicatively on the hazard. Log hazard ratio is linear in covariates.\n\n\n12.1.2 Aalen’s Additive Hazard Model\n\\[h(t;\\mathbf{x}) = h_0(t) + \\boldsymbol{\\beta}(t)^T \\mathbf{x}\\]\nCovariates act additively on the hazard. The regression coefficients \\(\\boldsymbol{\\beta}(t)\\) are time-varying, making this a very flexible model. Useful when the PH assumption fails.",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Concomitant Variables and Model Building</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_covariates.html#selecting-concomitant-variables",
+    "href": "unit4_covariates.html#selecting-concomitant-variables",
+    "title": "12  Concomitant Variables and Model Building",
+    "section": "12.2 Selecting Concomitant Variables",
+    "text": "12.2 Selecting Concomitant Variables\n\n12.2.1 Step 1: Univariable Screening\nFit each covariate separately and flag those with \\(p &lt; 0.25\\) (a liberal threshold used to avoid excluding important predictors):\n\ncovs &lt;- c(\"age\",\"sex\",\"ph.ecog\",\"ph.karno\",\"wt.loss\")\nuni_results &lt;- lapply(covs, function(v) {\n  fml &lt;- as.formula(paste(\"Surv(time, status==2) ~\", v))\n  fit &lt;- coxph(fml, data = lung)\n  tidy(fit, exponentiate = TRUE, conf.int = TRUE) |&gt;\n    select(term, estimate, conf.low, conf.high, p.value) |&gt;\n    mutate(across(where(is.numeric), \\(x) round(x,3)))\n})\nbind_rows(uni_results) |&gt;\n  kbl(col.names = c(\"Covariate\",\"HR\",\"Lower 95%\",\"Upper 95%\",\"p-value\"),\n      align = \"lcccc\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"condensed\"),\n                full_width = FALSE, position = \"center\")\n\n\n\nTable 12.1: Univariable Cox models for covariate screening\n\n\n\n\n\n\nCovariate\nHR\nLower 95%\nUpper 95%\np-value\n\n\n\n\nage\n1.019\n1.001\n1.037\n0.042\n\n\nsex\n0.588\n0.424\n0.816\n0.001\n\n\nph.ecog\n1.610\n1.289\n2.010\n0.000\n\n\nph.karno\n0.984\n0.972\n0.995\n0.005\n\n\nwt.loss\n1.001\n0.989\n1.013\n0.828\n\n\n\n\n\n\n\n\n\n\n\n\n12.2.2 Step 2: Multivariable Model with Stepwise Selection\n\nvars &lt;- c(\"time\",\"status\",\"age\",\"sex\",\n          \"ph.ecog\",\"ph.karno\",\"wt.loss\")\n\nlung_cc &lt;- lung[complete.cases(lung[, vars]), vars]\n\ncox_full &lt;- coxph(\n  Surv(time, status == 2) ~ age + sex + ph.ecog +\n    ph.karno + wt.loss,\n  data = lung_cc\n)\n\ncox_step &lt;- step(cox_full, direction = \"both\", trace = 0)\n\nsummary(cox_step)\n\nCall:\ncoxph(formula = Surv(time, status == 2) ~ age + sex + ph.ecog + \n    ph.karno, data = lung_cc)\n\n  n= 213, number of events= 151 \n\n              coef exp(coef)  se(coef)      z Pr(&gt;|z|)    \nage       0.015288  1.015405  0.009866  1.550 0.121244    \nsex      -0.613000  0.541723  0.176835 -3.467 0.000527 ***\nph.ecog   0.676438  1.966860  0.186552  3.626 0.000288 ***\nph.karno  0.015196  1.015313  0.009969  1.524 0.127406    \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n         exp(coef) exp(-coef) lower .95 upper .95\nage         1.0154     0.9848    0.9960    1.0352\nsex         0.5417     1.8460    0.3830    0.7661\nph.ecog     1.9669     0.5084    1.3645    2.8351\nph.karno    1.0153     0.9849    0.9957    1.0353\n\nConcordance= 0.637  (se = 0.026 )\nLikelihood ratio test= 31.54  on 4 df,   p=2e-06\nWald test            = 30.84  on 4 df,   p=3e-06\nScore (logrank) test = 31.28  on 4 df,   p=3e-06\n\n\n\n\n12.2.3 Step 3: Model Diagnostics\nCox–Snell residuals assess overall fit; Martingale residuals check functional form; Deviance residuals identify influential observations.\n\n# Null model residuals for functional form assessment\ncox_null &lt;- coxph(Surv(time, status==2) ~ 1, data = lung)\nmart_res  &lt;- residuals(cox_null, type = \"martingale\")\nlung_r    &lt;- lung |&gt; mutate(mart = mart_res)\n\np1 &lt;- ggplot(lung_r, aes(x = age, y = mart)) +\n  geom_point(alpha = 0.4, colour = \"#2C7BB6\") +\n  geom_smooth(method = \"loess\", se = TRUE, colour = \"#D7191C\") +\n  labs(title = \"Age\", x = \"Age (years)\", y = \"Martingale Residual\")\n\np2 &lt;- ggplot(lung_r, aes(x = ph.karno, y = mart)) +\n  geom_point(alpha = 0.4, colour = \"#2C7BB6\") +\n  geom_smooth(method = \"loess\", se = TRUE, colour = \"#D7191C\") +\n  labs(title = \"Karnofsky Score\", x = \"Karnofsky\", y = \"Martingale Residual\")\n\nlibrary(patchwork)\np1 + p2\n\n\n\n\n\n\n\nFigure 12.1: Martingale residuals vs covariates to assess functional form",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Concomitant Variables and Model Building</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_covariates.html#logistic-regression-for-fixed-time-survival",
+    "href": "unit4_covariates.html#logistic-regression-for-fixed-time-survival",
+    "title": "12  Concomitant Variables and Model Building",
+    "section": "12.3 Logistic Regression for Fixed-Time Survival",
+    "text": "12.3 Logistic Regression for Fixed-Time Survival\nWhen interest lies in survival to a specific time point \\(t_0\\) (e.g., one year), logistic regression is appropriate:\n\\[\\text{logit}[P(T \\leq t_0 \\mid \\mathbf{x})] = \\alpha + \\boldsymbol{\\beta}^T\\mathbf{x}\\]\n\nlung_lr &lt;- lung |&gt;\n  mutate(dead_1yr = as.integer(status == 2 & time &lt;= 365))\n\nlogit_fit &lt;- glm(\n  dead_1yr ~ age + factor(sex) + ph.ecog,\n  data = lung_lr,\n  family = binomial\n)\n\ntidy(logit_fit, exponentiate = TRUE, conf.int = TRUE) |&gt;\n  select(term, estimate, conf.low, conf.high, statistic, p.value) |&gt;\n  mutate(across(where(is.numeric), \\(x) round(x, 3))) |&gt;\n  kbl(\n    col.names = c(\n      \"Covariate\",\n      \"OR\",\n      \"Lower 95%\",\n      \"Upper 95%\",\n      \"z\",\n      \"p-value\"\n    ),\n    caption = \"Logistic regression: odds ratios for 1-year mortality\",\n    align = \"lccccc\"\n  ) |&gt;\n  kable_styling(\n    bootstrap_options = c(\"striped\", \"condensed\"),\n    full_width = FALSE,\n    position = \"center\"\n  )\n\n\nLogistic regression: odds ratios for 1-year mortality\n\n\nCovariate\nOR\nLower 95%\nUpper 95%\nz\np-value\n\n\n\n\n(Intercept)\n0.464\n0.064\n3.302\n-0.767\n0.443\n\n\nage\n1.008\n0.978\n1.040\n0.530\n0.596\n\n\nfactor(sex)2\n0.411\n0.230\n0.723\n-3.057\n0.002\n\n\nph.ecog\n2.138\n1.432\n3.259\n3.636\n0.000",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Concomitant Variables and Model Building</span>"
+    ]
+  },
+  {
+    "objectID": "unit4_covariates.html#age-of-onset-distributions",
+    "href": "unit4_covariates.html#age-of-onset-distributions",
+    "title": "12  Concomitant Variables and Model Building",
+    "section": "12.4 Age-of-Onset Distributions",
+    "text": "12.4 Age-of-Onset Distributions\nFor diseases where the event is disease onset rather than death, we model:\n\\[S(t) = P(\\text{onset age} &gt; t)\\]\nA parallel-system model assumes \\(k\\) susceptibility components must all “fail” for onset to occur:\n\\[S(t) = [S_1(t)]^k\\]\nIf \\(S_1(t) = e^{-\\lambda t}\\) (exponential), then \\(S(t) = e^{-k\\lambda t}\\) — still exponential but with rate \\(k\\lambda\\). With Weibull components, the parallel model produces a Weibull mixture.\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“It is easy to lie with statistics. It is hard to tell the truth without statistics.”\n— Andrejs Dunkels",
+    "crumbs": [
+      "UNIT IV: Regression Models",
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Concomitant Variables and Model Building</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_interval.html",
+    "href": "unit5_interval.html",
+    "title": "13  Interval Censoring",
+    "section": "",
+    "text": "13.1 The Interval-Censored Likelihood\nInterval censoring occurs when the event time is known only to lie within an interval \\((L_i, R_i]\\). This is extremely common in agricultural studies where inspections are periodic: a diseased plant found at week 5 means onset occurred between weeks 4 and 5.\nFor observation \\(i\\) with inspection interval \\((L_i, R_i]\\):\n\\[L_i(\\theta) = S(L_i;\\theta) - S(R_i;\\theta) = P(L_i &lt; T_i \\leq R_i)\\]\nThe full likelihood is \\(L(\\theta) = \\prod_{i=1}^n [S(L_i) - S(R_i)]\\).",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Interval Censoring</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_interval.html#the-turnbull-algorithm",
+    "href": "unit5_interval.html#the-turnbull-algorithm",
+    "title": "13  Interval Censoring",
+    "section": "13.2 The Turnbull Algorithm",
+    "text": "13.2 The Turnbull Algorithm\nThe non-parametric MLE for interval-censored data is computed by the Turnbull (1976) self-consistency algorithm — an EM algorithm that identifies which intervals can support probability mass.\nIn R, Surv(lower, upper, type = \"interval2\") encodes interval-censored observations. The survfit() function uses the Turnbull algorithm automatically.\n\nset.seed(123)\n\nn &lt;- 80\n\nicdat &lt;- data.frame(\n  lower = runif(n, 1, 8),\n  upper = runif(n, 8, 15),\n  treat = factor(rep(c(\"Control\", \"Treatment\"), each = n/2))\n)\n\nicdat$upper &lt;- pmax(icdat$upper, icdat$lower + 0.5)\n\nic_surv &lt;- Surv(icdat$lower, icdat$upper, type = \"interval2\")\n\nic_fit &lt;- survfit(ic_surv ~ treat, data = icdat)\n\nplot(\n  ic_fit,\n  col = c(\"#2C7BB6\", \"#D7191C\"),\n  lwd = 2,\n  xlab = \"Time\",\n  ylab = \"Survival Probability\",\n  main = \"Turnbull Estimator for Interval-Censored Data\"\n)\n\nlegend(\n  \"topright\",\n  legend = levels(icdat$treat),\n  col = c(\"#2C7BB6\", \"#D7191C\"),\n  lwd = 2,\n  bty = \"n\"\n)\n\n\n\n\n\n\n\nFigure 13.1: Non-parametric survival estimate from interval-censored data (Turnbull estimator)\n\n\n\n\n\n\n\n\n\n\n\nTypes of Interval Censoring\n\n\n\n\nCase I (current-status data): each subject inspected once; we know only whether the event has occurred by inspection time\nCase II: each subject inspected at multiple times; general \\((L_i, R_i]\\) intervals\nSpecial cases: right censoring (\\(R_i = \\infty\\)), exact observation (\\(L_i = R_i = t_i\\)), left censoring (\\(L_i = 0\\))",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Interval Censoring</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_competing.html",
+    "href": "unit5_competing.html",
+    "title": "14  Competing Risks",
+    "section": "",
+    "text": "14.1 Cause-Specific Hazard\nIn many survival studies, subjects can experience one of \\(k \\geq 2\\) distinct event types. Each type “competes” to occur first. A patient may die from cancer (cause 1), from cardiovascular disease (cause 2), or from other causes (cause 3). Occurrence of any one type precludes observation of the others.\nThe cause-specific hazard for cause \\(j\\):\n\\[h_j(t) = \\lim_{\\Delta t \\to 0} \\frac{P(t \\leq T &lt; t+\\Delta t,\\; J=j \\mid T \\geq t)}{\\Delta t}\\]\nThe overall hazard is the sum: \\(h(t) = \\sum_{j=1}^k h_j(t)\\), and the overall survival:\n\\[S(t) = \\exp\\!\\left\\{-\\sum_{j=1}^k H_j(t)\\right\\}\\]",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Competing Risks</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_competing.html#cumulative-incidence-function",
+    "href": "unit5_competing.html#cumulative-incidence-function",
+    "title": "14  Competing Risks",
+    "section": "14.2 Cumulative Incidence Function",
+    "text": "14.2 Cumulative Incidence Function\nThe cause-specific CIF (also called the sub-distribution function):\n\\[F_j(t) = P(T \\leq t,\\, J = j) = \\int_0^t S(u) h_j(u)\\, du\\]\nNote: \\(\\sum_j F_j(t) = 1 - S(t) \\leq 1\\).\n\n\n\n\n\n\nCritical Warning: The 1-KM Mistake\n\n\n\nA common error is to estimate \\(F_j(t)\\) by applying \\(1 - \\hat{S}_j(t)\\) where \\(\\hat{S}_j\\) is the KM estimator treating all other event types as censored. This overestimates \\(F_j(t)\\) because it ignores the fact that competing events remove subjects from the risk of cause \\(j\\). The correct estimate is the cumulative incidence function (CIF), also called the Aalen–Johansen estimator.",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Competing Risks</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_competing.html#indices-for-probability-of-death-under-competing-risks",
+    "href": "unit5_competing.html#indices-for-probability-of-death-under-competing-risks",
+    "title": "14  Competing Risks",
+    "section": "14.3 Indices for Probability of Death under Competing Risks",
+    "text": "14.3 Indices for Probability of Death under Competing Risks\nTwo conceptually different quantities:\n\n\n\n\n\n\n\nMeasure\nMeaning\n\n\n\n\nNet probability \\(Q_j(t)\\)\nRisk of dying from cause \\(j\\) if cause \\(j\\) were the only cause of death (hypothetical)\n\n\nCrude probability \\(F_j(t)\\)\nActual (observable) risk of dying from cause \\(j\\) in the real world\n\n\n\n\\[Q_j(t) = 1 - \\exp\\{-H_j(t)\\}\\]",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Competing Risks</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_competing.html#computing-cifs-in-r",
+    "href": "unit5_competing.html#computing-cifs-in-r",
+    "title": "14  Competing Risks",
+    "section": "14.4 Computing CIFs in R",
+    "text": "14.4 Computing CIFs in R\n\nset.seed(123)\nn &lt;- 600\nT1 &lt;- rweibull(n, shape=1.5, scale=400)\nT2 &lt;- rweibull(n, shape=0.8, scale=600)\nTc &lt;- runif(n, 200, 1000)\n\nobs_t &lt;- pmin(T1, T2, Tc)\ncause &lt;- ifelse(T1 == pmin(T1,T2,Tc), 1,\n         ifelse(T2 == pmin(T1,T2,Tc), 2, 0))\n\ncr_data  &lt;- data.frame(time = obs_t, cause = cause)\ncr_surv  &lt;- Surv(cr_data$time, cr_data$cause, type = \"mstate\")\ncif_fit  &lt;- survfit(cr_surv ~ 1)\n\nplot(cif_fit, col = c(\"#2C7BB6\",\"#D7191C\"), lwd = 2,\n     xlab = \"Time\", ylab = \"Cumulative Incidence\",\n     main = \"Competing Risks: Cumulative Incidence Functions\")\nlines(survfit(Surv(obs_t, cause&gt;0) ~ 1), col = \"grey50\", lwd=1.5, lty=2)\nlegend(\"topleft\",\n       legend = c(\"CIF Cause 1\",\"CIF Cause 2\",\"1 - S(t) (overall)\"),\n       col    = c(\"#2C7BB6\",\"#D7191C\",\"grey50\"),\n       lwd    = c(2,2,1.5), lty = c(1,1,2), bty = \"n\")\n\n\n\n\n\n\n\nFigure 14.1: Cumulative incidence functions under competing risks (simulated data)",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Competing Risks</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_competing.html#cause-specific-cox-vs-finegray-models",
+    "href": "unit5_competing.html#cause-specific-cox-vs-finegray-models",
+    "title": "14  Competing Risks",
+    "section": "14.5 Cause-Specific Cox vs Fine–Gray Models",
+    "text": "14.5 Cause-Specific Cox vs Fine–Gray Models\nTwo approaches for regression with competing risks:\n\n\n\n\n\n\n\n\nApproach\nModel\nQuantity estimated\n\n\n\n\nCause-specific Cox\nSeparate Cox for each cause; others treated as censored\nCause-specific hazard ratio\n\n\nFine–Gray\nSubdistribution hazard model\nEffect on CIF directly\n\n\n\n\ncr_data$x1 &lt;- rnorm(n); cr_data$x2 &lt;- rbinom(n,1,0.5)\ncr_data$ev1 &lt;- as.integer(cr_data$cause==1)\ncr_data$ev2 &lt;- as.integer(cr_data$cause==2)\n\ncs1 &lt;- coxph(Surv(time, ev1) ~ x1 + x2, data = cr_data)\ncs2 &lt;- coxph(Surv(time, ev2) ~ x1 + x2, data = cr_data)\n\ncat(\"=== Cause 1: Cause-specific Cox ===\\n\"); print(summary(cs1)$coef)\n\n=== Cause 1: Cause-specific Cox ===\n\n\n          coef exp(coef)   se(coef)          z  Pr(&gt;|z|)\nx1 -0.02347272 0.9768006 0.05889138 -0.3985765 0.6902053\nx2  0.12952691 1.1382897 0.11861828  1.0919641 0.2748489\n\ncat(\"\\n=== Cause 2: Cause-specific Cox ===\\n\"); print(summary(cs2)$coef)\n\n\n=== Cause 2: Cause-specific Cox ===\n\n\n          coef exp(coef)   se(coef)         z   Pr(&gt;|z|)\nx1 -0.13010440 0.8780038 0.06432678 -2.022554 0.04311914\nx2 -0.05473105 0.9467397 0.12841997 -0.426188 0.66997088\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“Statistical thinking will one day be as necessary for efficient citizenship as the ability to read and write.”\n— H. G. Wells",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Competing Risks</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_epidemic.html",
+    "href": "unit5_epidemic.html",
+    "title": "15  Stochastic Epidemic Models",
+    "section": "",
+    "text": "15.1 Simple Epidemic (SI Model)\nEpidemic models describe the spread of disease through a population over time. They sit at the intersection of survival analysis, stochastic processes, and differential equations. In agricultural contexts, they model the spread of crop diseases, pest infestations, and livestock infections.\nThe simplest epidemic model has two compartments: Susceptible (\\(S\\)) and Infectious (\\(I\\)). Population size \\(N = S + I\\) is fixed.\n\\[\\frac{dS}{dt} = -\\beta SI, \\qquad \\frac{dI}{dt} = \\beta SI\\]\nSolution (logistic growth):\n\\[I(t) = \\frac{N I_0 e^{\\beta N t}}{N - I_0 + I_0 e^{\\beta N t}} = \\frac{N}{1 + \\left(\\frac{N - I_0}{I_0}\\right) e^{-\\beta N t}}\\]",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>15</span>  <span class='chapter-title'>Stochastic Epidemic Models</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_epidemic.html#general-epidemic-the-sir-model",
+    "href": "unit5_epidemic.html#general-epidemic-the-sir-model",
+    "title": "15  Stochastic Epidemic Models",
+    "section": "15.2 General Epidemic: The SIR Model",
+    "text": "15.2 General Epidemic: The SIR Model\nAdding a Removed (\\(R\\)) compartment (recovered or dead, immune):\n\\[\\frac{dS}{dt} = -\\beta SI, \\qquad \\frac{dI}{dt} = \\beta SI - \\gamma I, \\qquad \\frac{dR}{dt} = \\gamma I\\]\nParameters: - \\(\\beta\\) = transmission rate (contact rate × probability of transmission per contact) - \\(\\gamma\\) = removal rate (recovery + death rate) - \\(1/\\gamma\\) = mean infectious period\n\n15.2.1 Kermack–McKendrick Threshold Theorem\nAn epidemic (increasing \\(I\\)) occurs if and only if:\n\\[S(0) &gt; \\frac{\\gamma}{\\beta} \\equiv \\rho \\quad \\text{(threshold density)}\\]\nEquivalently, defining the Basic Reproduction Number:\n\\[R_0 = \\frac{\\beta S(0)}{\\gamma}\\]\nAn epidemic spreads (\\(I\\) initially increases) if and only if \\(R_0 &gt; 1\\).\nFinal size: The fraction \\(r_\\infty\\) ultimately infected satisfies \\(1 - r_\\infty = e^{-R_0 r_\\infty}\\) (transcendental equation, solved numerically).\n\nsir_ode &lt;- function(time, state, parms) {\n  with(as.list(c(state, parms)), {\n    list(c(-beta*S*I, beta*S*I - gamma*I, gamma*I))\n  })\n}\n\ntimes &lt;- seq(0, 300, by = 0.5)\nN &lt;- 10000; I0 &lt;- 10\ngamma &lt;- 0.1\n\nresults &lt;- lapply(c(0.5, 1.5, 2.5, 4.0), function(r0) {\n  beta &lt;- r0 * gamma / (N - I0)\n  sol  &lt;- ode(y = c(S = N-I0, I = I0, R = 0),\n              times = times, func = sir_ode,\n              parms = c(beta=beta, gamma=gamma))\n  as.data.frame(sol) |&gt;\n    mutate(R0 = paste0(\"R₀ = \", r0), across(S:R, \\(x) x/N))\n})\n\nsir_df &lt;- bind_rows(results) |&gt;\n  pivot_longer(S:R, names_to = \"Compartment\", values_to = \"Proportion\")\n\nggplot(sir_df, aes(x = time, y = Proportion,\n                    colour = Compartment, linetype = Compartment)) +\n  geom_line(linewidth = 1) +\n  facet_wrap(~R0, ncol = 2) +\n  scale_colour_manual(values = c(S=\"#2C7BB6\", I=\"#D7191C\", R=\"#1A9641\")) +\n  scale_linetype_manual(values = c(S=\"solid\", I=\"solid\", R=\"dashed\")) +\n  labs(title = \"SIR Epidemic Model: Effect of Basic Reproduction Number R₀\",\n       x = \"Time (days)\", y = \"Proportion of Population\",\n       colour = \"Compartment\", linetype = \"Compartment\") +\n  theme(legend.position = \"bottom\",\n        strip.background = element_rect(fill = \"#EAF4FB\"),\n        strip.text = element_text(face = \"bold\"))\n\n\n\n\n\n\n\nFigure 15.1: SIR model dynamics for different R₀ values",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>15</span>  <span class='chapter-title'>Stochastic Epidemic Models</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_epidemic.html#recurrent-epidemics-the-sirs-model",
+    "href": "unit5_epidemic.html#recurrent-epidemics-the-sirs-model",
+    "title": "15  Stochastic Epidemic Models",
+    "section": "15.3 Recurrent Epidemics: The SIRS Model",
+    "text": "15.3 Recurrent Epidemics: The SIRS Model\nIf immunity wanes at rate \\(\\delta\\), recovered individuals re-enter the susceptible pool:\n\\[\\frac{dS}{dt} = -\\beta SI + \\delta R, \\qquad \\frac{dI}{dt} = \\beta SI - \\gamma I, \\qquad \\frac{dR}{dt} = \\gamma I - \\delta R\\]\nThis can produce oscillatory dynamics (recurrent epidemic waves) — relevant for modelling seasonal crop diseases.\n\nsirs_ode &lt;- function(time, state, parms) {\n  with(as.list(c(state, parms)), {\n    list(c(-beta*S*I + delta*R, beta*S*I - gamma*I, gamma*I - delta*R))\n  })\n}\n\nsol_sirs &lt;- ode(\n  y = c(S = 9990, I = 10, R = 0),\n  times = seq(0, 2000, by = 1),\n  func = sirs_ode,\n  parms = c(beta = 0.0003, gamma = 0.1, delta = 0.005)\n)\nsirs_df &lt;- as.data.frame(sol_sirs) |&gt;\n  mutate(across(S:R, \\(x) x/10000)) |&gt;\n  pivot_longer(S:R, names_to = \"Compartment\", values_to = \"Proportion\")\n\nggplot(sirs_df, aes(x = time, y = Proportion, colour = Compartment)) +\n  geom_line(linewidth = 0.9) +\n  scale_colour_manual(values = c(S=\"#2C7BB6\", I=\"#D7191C\", R=\"#1A9641\")) +\n  labs(title = \"SIRS Model: Recurrent Epidemic Waves (Waning Immunity)\",\n       x = \"Time (days)\", y = \"Proportion of Population\",\n       colour = NULL) +\n  theme(legend.position = \"bottom\")\n\n\n\n\n\n\n\nFigure 15.2: SIRS model with waning immunity showing recurrent epidemic waves",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>15</span>  <span class='chapter-title'>Stochastic Epidemic Models</span>"
+    ]
+  },
+  {
+    "objectID": "unit5_epidemic.html#stochastic-sir-simulation",
+    "href": "unit5_epidemic.html#stochastic-sir-simulation",
+    "title": "15  Stochastic Epidemic Models",
+    "section": "15.4 Stochastic SIR Simulation",
+    "text": "15.4 Stochastic SIR Simulation\nDeterministic ODEs describe the average epidemic trajectory. In small populations, stochasticity matters: some epidemics die out before taking hold even when \\(R_0 &gt; 1\\).\nThe Gillespie algorithm simulates the exact stochastic process:\n\nstoch_sir &lt;- function(N=1000, I0=5, beta=0.0003, gamma=0.1, tmax=300) {\n  S &lt;- N-I0; I &lt;- I0; R &lt;- 0; t &lt;- 0\n  times &lt;- I_t &lt;- t\n  while (t &lt; tmax && I &gt; 0) {\n    r_inf &lt;- beta*S*I; r_rec &lt;- gamma*I; r_tot &lt;- r_inf+r_rec\n    if (r_tot == 0) break\n    t &lt;- t + rexp(1, r_tot)\n    if (runif(1) &lt; r_inf/r_tot) { S &lt;- S-1; I &lt;- I+1 } else { I &lt;- I-1; R &lt;- R+1 }\n    times &lt;- c(times, t); I_t &lt;- c(I_t, I)\n  }\n  data.frame(time = times, I = I_t)\n}\n\nset.seed(2025)\nsims &lt;- lapply(1:20, function(i) stoch_sir() |&gt; mutate(sim = i))\nsims_df &lt;- bind_rows(sims)\n\nggplot(sims_df, aes(x = time, y = I/1000, group = sim, colour = factor(sim))) +\n  geom_line(alpha = 0.5, linewidth = 0.6) +\n  labs(title = \"Stochastic SIR: 20 Gillespie Realisations (N=1000, R₀≈3)\",\n       x = \"Time (days)\", y = \"Proportion Infectious\") +\n  theme(legend.position = \"none\")\n\n\n\n\n\n\n\nFigure 15.3: 20 stochastic SIR realisations (Gillespie algorithm): variability around the deterministic mean\n\n\n\n\n\n\n\n\n\n\n\nHistorical Insights\n\n\n\nWilliam Ogilvy Kermack (1898–1970) and Anderson Gray McKendrick (1876–1943) published their epidemic threshold theorem in 1927. McKendrick was an Indian Medical Service officer who studied mathematical models of epidemics while stationed in India; Kermack was a Scottish biochemist who became blind following a laboratory accident in 1924 yet continued his scientific career. Their 1927 paper is considered the founding document of mathematical epidemiology.\n\n\n\n\n\n\n\n\nQuotes to Inspire\n\n\n\n“An approximate answer to the right question is worth a great deal more than a precise answer to the wrong question.”\n— John W. Tukey",
+    "crumbs": [
+      "UNIT V: Advanced Topics",
+      "<span class='chapter-number'>15</span>  <span class='chapter-title'>Stochastic Epidemic Models</span>"
+    ]
+  }
+]

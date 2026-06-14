@@ -1,0 +1,74 @@
+# Interval Censoring
+
+Interval censoring occurs when the event time is known only to lie within an interval $(L_i, R_i]$. This is extremely common in agricultural studies where inspections are periodic: a diseased plant found at week 5 means onset occurred *between* weeks 4 and 5.
+
+```{r}
+#| label: setup-ic
+#| echo: false
+suppressPackageStartupMessages({
+  library(survival); library(ggplot2); library(dplyr)
+  library(knitr); library(kableExtra); library(km.ci)
+})
+theme_set(theme_bw(base_size = 13))
+```
+
+## The Interval-Censored Likelihood
+
+For observation $i$ with inspection interval $(L_i, R_i]$:
+
+$$L_i(\theta) = S(L_i;\theta) - S(R_i;\theta) = P(L_i < T_i \leq R_i)$$
+
+The full likelihood is $L(\theta) = \prod_{i=1}^n [S(L_i) - S(R_i)]$.
+
+## The Turnbull Algorithm
+
+The non-parametric MLE for interval-censored data is computed by the **Turnbull (1976)** self-consistency algorithm — an EM algorithm that identifies which intervals can support probability mass.
+
+In R, `Surv(lower, upper, type = "interval2")` encodes interval-censored observations. The `survfit()` function uses the Turnbull algorithm automatically.
+
+```{r}
+#| label: fig-interval-km
+#| fig-cap: "Non-parametric survival estimate from interval-censored data (Turnbull estimator)"
+#| fig-align: center
+#| fig-width: 8
+#| fig-height: 5
+
+set.seed(123)
+
+n <- 80
+
+icdat <- data.frame(
+  lower = runif(n, 1, 8),
+  upper = runif(n, 8, 15),
+  treat = factor(rep(c("Control", "Treatment"), each = n/2))
+)
+
+icdat$upper <- pmax(icdat$upper, icdat$lower + 0.5)
+
+ic_surv <- Surv(icdat$lower, icdat$upper, type = "interval2")
+
+ic_fit <- survfit(ic_surv ~ treat, data = icdat)
+
+plot(
+  ic_fit,
+  col = c("#2C7BB6", "#D7191C"),
+  lwd = 2,
+  xlab = "Time",
+  ylab = "Survival Probability",
+  main = "Turnbull Estimator for Interval-Censored Data"
+)
+
+legend(
+  "topright",
+  legend = levels(icdat$treat),
+  col = c("#2C7BB6", "#D7191C"),
+  lwd = 2,
+  bty = "n"
+)
+```
+
+::: {.callout-note title="Types of Interval Censoring"}
+-   **Case I** (current-status data): each subject inspected once; we know only whether the event has occurred by inspection time
+-   **Case II**: each subject inspected at multiple times; general $(L_i, R_i]$ intervals
+-   Special cases: right censoring ($R_i = \infty$), exact observation ($L_i = R_i = t_i$), left censoring ($L_i = 0$)
+:::
