@@ -1,221 +1,1269 @@
-# Measures of Mortality and Morbidity
+---
+title: "Unit 1: Measures of Mortality and Morbidity"
+subtitle: "Foundations of Demographic and Epidemiological Analysis"
+author: "Department of Agricultural Statistics"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    number-sections: true
+    theme: cosmo
+    code-fold: true
+    code-tools: true
+    fig-align: center
+    callout-appearance: minimal
+    highlight-style: github
+execute:
+  echo: true
+  warning: false
+  message: false
+---
 
-Survival analysis begins not with equations but with data — specifically, with counts of people or organisms dying, falling ill, or failing over time. This chapter introduces the demographic and epidemiological measures that form the empirical foundation of survival analysis. These measures predate formal survival methods by centuries, yet they remain indispensable: every life table, every actuarial calculation, and every clinical trial protocol rests on the concepts introduced here.
+# Introduction {#sec-intro}
 
-We cover rates and ratios, the central mortality measures used in vital statistics, the distinction between prevalence and incidence, and the two key measures of association — relative risk and odds ratio — that arise naturally when comparing mortality experiences across groups.
+Survival analysis begins not with equations but with data — with counts of people dying, organisms failing, crops succumbing to disease, or patients recovering. Before any formal statistical model can be applied, we need a precise vocabulary for describing *how many*, *how fast*, and *among whom* these events occur. That vocabulary is built from the measures of mortality and morbidity introduced in this unit.
+
+Mortality and morbidity measurement has a history stretching back to John Graunt's *Natural and Political Observations upon the Bills of Mortality* (1662), the first systematic demographic analysis of death records. The measures Graunt pioneered — counts, proportions, and rates — remain the empirical foundation of every life table, actuarial calculation, and clinical trial protocol in use today.
+
+This unit covers:
+
+-   The conceptual distinction between mortality and morbidity
+-   Data sources used in mortality and morbidity analysis
+-   The hierarchy of epidemiological measures: counts, ratios, proportions, and rates
+-   All major mortality measures with formulae, interpretations, and worked examples
+-   The Lexis diagram as a tool for representing demographic time
+-   Period rates versus cohort rates
+-   Rate standardisation: direct and indirect methods
+-   Key measures of morbidity: incidence, prevalence, attack rate, and case fatality rate
+-   Measures of association: relative risk and odds ratio  
+
 
 ```{r}
-#| label: setup-u1
+#| label: setup
 #| echo: false
-pkgs <- c("survival", "survminer", "ggplot2", "dplyr", "knitr",
-          "kableExtra", "scales", "tidyr")
-new_pkgs <- pkgs[!pkgs %in% installed.packages()[, "Package"]]
-if (length(new_pkgs)) install.packages(new_pkgs, repos = "https://cloud.r-project.org")
+#| include: false
+
+pkgs <- c("survival","ggplot2","dplyr","knitr","kableExtra",
+          "scales","tidyr","patchwork","ggtext")
+new  <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
+if (length(new)) install.packages(new, repos = "https://cloud.r-project.org")
+
 suppressPackageStartupMessages({
   library(ggplot2); library(dplyr); library(knitr)
   library(kableExtra); library(scales); library(tidyr)
+  library(patchwork)
 })
-theme_set(theme_bw(base_size = 13))
+
+theme_set(theme_bw(base_size = 13) +
+            theme(plot.title    = element_text(face = "bold", size = 14),
+                  plot.subtitle = element_text(colour = "grey40"),
+                  panel.grid.minor = element_blank()))
 ```
 
-## Ratios, Proportions, and Rates
+------------------------------------------------------------------------
 
-Three closely related but distinct measures pervade the literature:
+# Concept of Mortality and Morbidity {#sec-concepts}
 
-**Ratio**: A quotient $A/B$ where the numerator is *not* a subset of the denominator.
+## Mortality
 
-> *Example*: Sex ratio = number of males / number of females.
+**Mortality** is defined as the demographic event of death — the permanent departure of an individual from the living population. Because death occurs at most once per individual, mortality analysis is conceptually simpler than fertility analysis (where a birth can occur multiple times to the same woman).
 
-**Proportion**: A quotient $A/(A+B)$ where the numerator *is* a subset of the denominator. A proportion always lies in $[0, 1]$.
-
-> *Example*: Case fatality proportion = deaths from disease / total cases of disease.
-
-**Rate**: A measure of occurrence per unit of *population* per unit of *time*.
-
-> *Example*: Death rate = deaths per 1,000 population per year.
-
-Rates are the most informative measure for comparing populations of different sizes, but they require a clear specification of the population at risk and the time period.
-
-::: {.callout-tip title="Common Confusion"}
-A "rate" in everyday language is often just a proportion. In epidemiology and demography, a true rate must have *time* in the denominator (explicitly or implicitly). The distinction matters when computing person-years of exposure.
+::: {.callout-note title="Formal Definition"}
+Mortality is the *rate of death* occurring in a defined population during a specified period of time, caused by natural causes, disease, accident, or other factors.
 :::
 
-## Crude Birth Rate
+Mortality analysis begins with good-quality data on deaths and on the population exposed to the risk of dying. These data come from:
 
-The **Crude Birth Rate (CBR)** is the number of live births per 1,000 mid-year population in a given year:
+-   **Vital registration systems** (Civil Registration System, CRS)
+-   **Sample Registration System** (SRS — a dual-record system providing national and state-level estimates)
+-   **Population censuses** and **sample surveys** (NSSO, Annual Health Survey)
 
-$$\text{CBR} = \frac{B}{P} \times 1000$$
+The risk of dying is not uniform: it is high in infancy, falls sharply in childhood, reaches a minimum near age 10, then rises progressively — steeply after age 50. This characteristic pattern, shaped like a **reverse J-curve**, is universal across all human populations, though the level at each age varies with the health environment.
 
-where $B$ = total live births during the year and $P$ = mid-year population.
+## Morbidity
 
-"Crude" means the rate is computed for the entire population without adjustment for age or sex composition.
+**Morbidity** refers to the *state of illness or disease* in a population — the condition of health rather than the event of death. Morbidity and mortality are interlinked: morbidity may lead to death, but not all deaths are preceded by a recognised morbid episode.
 
-## Mortality Measures
+According to the WHO (1946), *health* is a state of complete physical, mental, and social well-being — not merely the absence of disease. Deviations from this state constitute morbidity.
 
-### Crude Death Rate
+The National Sample Survey Organisation (NSSO) defines an **ailment** (illness or injury) as *any deviation from the state of physical and mental well-being* during a reference period, including:
 
-$$\text{CDR} = \frac{D}{P} \times 1000$$
+-   Diseases (communicable and non-communicable)
+-   Injuries (cuts, fractures, burns, bites)
+-   Disabilities (visual, hearing, locomotor, mental)
 
-where $D$ = total deaths during the year. CDR is useful for broad comparisons but can be misleading when populations have very different age structures.
+::: {.callout-important title="Key Distinction"}
+| Feature          | Mortality            | Morbidity                 |
+|------------------|----------------------|---------------------------|
+| What it measures | Risk of dying        | State of being ill        |
+| Event            | Death (occurs once)  | Illness (may recur)       |
+| Primary measure  | Death rate           | Incidence/Prevalence rate |
+| Data source      | Death registers, SRS | Surveys, hospital records |
+:::
 
-### Age-Specific Death Rate
+------------------------------------------------------------------------
 
-$$\text{ASDR}_x = \frac{D_x}{P_x} \times 1000$$
+# Data Sources for Mortality and Morbidity Analysis {#sec-data}
 
-where $D_x$ and $P_x$ are deaths and mid-year population in the age group $[x, x+n)$.
+Reliable mortality and morbidity analysis depends on the quality of underlying data. The principal sources in India (and analogously elsewhere) are:
 
-### Infant Mortality Rate
+**Sample Registration System (SRS)**: A dual-record system combining continuous enumeration with periodic retrospective surveys. Provides annual estimates of birth and death rates at the national and state level. Considered the most reliable source of vital statistics in India.
 
-$$\text{IMR} = \frac{\text{Deaths of children under 1 year}}{\text{Live births}} \times 1000$$
+**Civil Registration System (CRS)**: Legal registration of births, deaths, and marriages. Provides district-level coverage but data quality varies across states; several states report significant under-registration.
 
-IMR is widely used as an indicator of overall public health and quality of life.
+**Annual Health Survey (AHS)**: Conducted in high-fertility states (the BIMARU group — Bihar, Madhya Pradesh, Rajasthan, Uttar Pradesh — plus Assam, Chhattisgarh, Jharkhand, Odisha, and Uttarakhand). Covers over 4 million households per round and provides district-level mortality indicators including neonatal, infant, and under-5 mortality.
 
-### Standardised Mortality Ratio (SMR)
+**Population Census**: Provides age-sex distributions essential for computing age-specific rates. Also collects disability data.
 
-When two populations have different age distributions, crude death rates are not directly comparable. The **SMR** solves this by comparing observed deaths in the study population to those *expected* if the standard population's age-specific rates applied:
+**NSSO Surveys**: Morbidity and healthcare rounds provide data on ailment rates (illness in the last 15 days and last year) and hospitalisation rates.
 
-$$\text{SMR} = \frac{O}{E} \times 100 = \frac{\sum_x D_x^{\text{study}}}{\sum_x P_x^{\text{study}} \times m_x^{\text{standard}}} \times 100$$
+------------------------------------------------------------------------
 
-$\text{SMR} > 100$ indicates higher mortality than the standard; $\text{SMR} < 100$ indicates lower.
+# The Hierarchy of Epidemiological Measures {#sec-hierarchy}
+
+All epidemiological measures belong to one of four categories. Understanding their logical relationships prevents common misuses.
+
+## Count
+
+The simplest measure: the raw **number of events** (deaths, cases, births) in a population during a time period. Counts are useful for resource allocation but tell us nothing about the size of the underlying population.
+
+> *Example*: 29,153 infant deaths in the United States in 2007.
+
+## Ratio
+
+A **ratio** is any quotient $X / Y$ where $X$ and $Y$ need not be related subsets. Ratios express one quantity relative to another.
+
+$$\text{Ratio} = \frac{X}{Y}$$
+
+> *Example*: Sex ratio = (number of males / number of females) × 100. In the United States (2010): $(151{,}781{,}326 / 156{,}964{,}212) \times 100 = 96.7$, indicating more females than males.
+
+The **sex ratio at birth** is defined as:
+
+$$\text{Sex ratio at birth} = \frac{\text{Number of male births}}{\text{Number of female births}} \times 1000$$
+
+## Proportion
+
+A **proportion** is a ratio where the numerator is a subset of the denominator. Proportions lie in $[0,1]$ and may be expressed as percentages.
+
+$$\text{Proportion} = \frac{A}{A + B}$$
+
+> *Example*: If 1,150 deaths occurred among African-American boys and 3,810 among white boys (ages 5–14), the proportion of deaths accounted for by African-American boys is $(1150/4960) \times 100 = 23.2\%$.
+
+## Rate
+
+A **rate** is a special ratio in which:
+
+1.  The numerator = frequency of events during a specified time period
+2.  The denominator = the population *at risk* of experiencing those events during the same period
+3.  A multiplier (10, 100, 1,000, or 100,000) makes the rate interpretable as an integer
+
+$$\text{Rate} = \frac{\text{Number of events in period}}{\text{Population at risk in period}} \times k$$
+
+Rates enable comparisons across populations of different sizes. They are the workhorse of epidemiology and demography.
 
 ```{r}
-#| label: tbl-smr
-#| tbl-cap: "SMR calculation: Study population vs standard rates"
+#| label: fig-hierarchy
+#| fig-cap: "Hierarchy of epidemiological measures"
+#| fig-height: 4
+#| echo: false
+
+df <- data.frame(
+  label = c("Count","Ratio","Proportion","Rate",
+             "Prevalence","Incidence\nRate","Crude","Specific","Adjusted"),
+  x  = c(5, 5, 3.5, 6.5, 3.5, 6.5, 5.5, 7.5, 8.5),
+  y  = c(9, 7, 5,   5,   3,   3,   1,   1,   1),
+  grp = c("top","mid","prop","rate","meas","meas","rate2","rate2","rate2")
+)
+
+edges <- data.frame(
+  x1 = c(5,5,5,3.5,6.5,6.5,6.5),
+  y1 = c(9,7,7, 5,  5,  3,  3),
+  x2 = c(5,3.5,6.5,3.5,6.5,5.5,7.5),
+  y2 = c(7,5,  5,  3,  3,  1,  1)
+)
+
+ggplot() +
+  geom_segment(data = edges,
+               aes(x=x1,y=y1,xend=x2,yend=y2),
+               arrow = arrow(length=unit(0.15,"cm"), type="closed"),
+               colour = "grey60", linewidth = 0.6) +
+  geom_label(data = df, aes(x=x, y=y, label=label),
+             fill = c("#2166ac","#4393c3","#74add1","#74add1",
+                      "#abd9e9","#abd9e9","#e0f3f8","#e0f3f8","#e0f3f8"),
+             colour = "black", size = 3.5, fontface = "bold",
+             label.size = 0.4, label.r = unit(0.2,"lines")) +
+  scale_y_continuous(limits = c(0, 10)) +
+  scale_x_continuous(limits = c(1, 11)) +
+  theme_void() +
+  labs(title = "Epidemiological Measures: A Logical Hierarchy")
+```
+
+------------------------------------------------------------------------
+
+# Mortality Measures {#sec-mortality}
+
+The table below summarises all major mortality measures with their formulae and multipliers before we examine each in detail.
+
+```{r}
+#| label: tbl-mortality-summary
+#| tbl-cap: "Summary of mortality measures: numerators, denominators, and multipliers"
+#| echo: false
+
+measures <- data.frame(
+  Measure = c(
+    "Crude Death Rate (CDR)",
+    "Age-Specific Death Rate (ASDR)",
+    "Cause-Specific Death Rate (CSDR)",
+    "Proportional Mortality Ratio (PMR)",
+    "Crude Birth Rate (CBR)",
+    "General Fertility Rate (GFR)",
+    "Infant Mortality Rate (IMR)",
+    "Neonatal Mortality Rate (NMR)",
+    "Post-neonatal Mortality Rate (PNMR)",
+    "Perinatal Mortality Rate",
+    "Maternal Mortality Rate (MMR)",
+    "Child Mortality Rate (CMR)"
+  ),
+  Numerator = c(
+    "Total deaths during year",
+    "Deaths in age group [x, x+n)",
+    "Deaths from specific cause",
+    "Deaths from specific cause",
+    "Live births during year",
+    "Live births during year",
+    "Deaths < 1 year of age",
+    "Deaths < 28 days of age",
+    "Deaths 28–364 days of age",
+    "Late fetal deaths (≥28 wk) + infant deaths within 7 days",
+    "Deaths from pregnancy-related causes",
+    "Deaths of children 1–4 years"
+  ),
+  Denominator = c(
+    "Mid-year population",
+    "Mid-year population, same age group",
+    "Mid-year total population",
+    "Deaths from all causes",
+    "Mid-year population",
+    "Mid-year women aged 15–44",
+    "Live births during year",
+    "Live births during year",
+    "Live births − neonatal deaths",
+    "Live births + late fetal deaths",
+    "Live births during year",
+    "Population 0–4 years of age"
+  ),
+  Multiplier = c(
+    "1,000","1,000","100,000","%","1,000","1,000",
+    "1,000","1,000","1,000","1,000","100,000","1,000"
+  )
+)
+
+kbl(measures, align = c("l","l","l","c")) |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed","responsive"),
+                full_width = TRUE) |>
+  column_spec(1, bold = TRUE, width = "20%") |>
+  column_spec(4, width = "10%")
+```
+
+## Crude Death Rate (CDR) {#sec-cdr}
+
+The **Crude Death Rate** is the simplest and most widely reported measure of overall mortality. It gives the number of deaths per 1,000 mid-year population during a calendar year.
+
+$$\boxed{\text{CDR} = \frac{D}{P} \times 1000}$$
+
+where $D$ = total deaths during the year, and $P$ = mid-year population.
+
+::: {.callout-note title="Why mid-year population?"}
+The population changes continuously throughout the year through births, deaths, and migration. The mid-year population (estimated as the population on 1 July) is the conventional approximation to the average population at risk during the year.
+:::
+
+**Strengths:** Simple to compute; requires only total deaths and population.
+
+**Limitations:** "Crude" means no adjustment for the age-sex composition of the population. Two populations can have very different age structures yet similar CDRs (or vice versa). A population with a higher proportion of elderly will have a higher CDR purely because of its age structure, not because mortality at any given age is worse.
+
+```{r}
+#| label: tbl-cdr-example
+#| tbl-cap: "Illustrative CDR calculation: Why crude rates mislead"
 #| echo: true
 
-smr_data <- data.frame(
-  Age_Group    = c("0–14","15–44","45–64","65+"),
-  Pop_Study    = c(12000, 25000, 18000, 5000),
-  Deaths_Study = c(18, 35, 144, 250),
-  Std_Rate     = c(1.5, 1.4, 8.0, 50.0)   # per 1000 per year
-)
-smr_data <- smr_data |>
-  mutate(Expected = Pop_Study * Std_Rate / 1000)
+cdr_df <- data.frame(
+  Country  = c("Country A (young)", "Country B (old)"),
+  Deaths   = c(50000, 90000),
+  MidYrPop = c(10e6, 10e6)
+) |>
+  mutate(CDR = round(Deaths / MidYrPop * 1000, 1))
 
-total_O <- sum(smr_data$Deaths_Study)
-total_E <- sum(smr_data$Expected)
-smr_val <- total_O / total_E * 100
-
-smr_data |>
-  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
-  kbl(col.names = c("Age Group","Pop (Study)","Deaths (Study)",
-                    "Std Rate (/1000)","Expected Deaths"),
-      align = "c") |>
-  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+kbl(cdr_df,
+    col.names = c("Population","Deaths","Mid-year Pop.","CDR (per 1,000)"),
+    align     = "lrrr",
+    format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped","hover"),
                 full_width = FALSE, position = "center") |>
-  footnote(general = paste0("Total observed = ", total_O,
-                             ";  Total expected = ", round(total_E,1),
-                             ";  SMR = ", round(smr_val,1)))
+  footnote(general = "Both populations have the same size. Country B's higher CDR
+  may simply reflect an older age structure, not worse health at any given age.")
 ```
 
-## Person-Years of Exposure
+## Age-Specific Death Rate (ASDR) {#sec-asdr}
 
-In long-term cohort studies (e.g., longitudinal crop trials or animal feeding experiments), subjects enter and leave at different times. Simply dividing by the number of subjects ignores these varying exposure periods.
+The ASDR controls for age by computing the death rate *within* each age stratum:
 
-**Person-years** accumulate the actual time each subject was at risk:
+$$\boxed{\text{ASDR}_{[x,x+n)} = \frac{{}_{n}D_x}{{}_{n}P_x} \times 1000}$$
 
-$$\text{Incidence rate} = \frac{\text{Number of new cases}}{\sum_{i=1}^n t_i^*}$$
+where ${}_{n}D_x$ = deaths between exact ages $x$ and $x+n$, and ${}_{n}P_x$ = mid-year population in that age group.
 
-where $t_i^*$ is the time subject $i$ was under observation (whether they experienced the event or were censored).
+The universal pattern of age-specific mortality (for any human population):
 
-::: {.callout-caution title="Agricultural Application"}
-In a field trial monitoring time-to-pest-infestation across 50 plots over 3 seasons, some plots are harvested early (censored). Person-plot-seasons must be used in the denominator, not simply 50 × 3.
-:::
+-   **Infancy**: very high — the *neonatal hazard*
+-   **Ages 1–10**: rapid decline to a minimum
+-   **Adolescence/early adulthood**: slight rise (accidents, violence)
+-   **Middle age onwards**: steady exponential increase
+-   **Old age (\>50)**: steep acceleration
+
+In high-mortality settings, the ASDRs form a **U-shaped curve** (high at both extremes). In low-mortality settings, the shape is more **J-shaped** (dominant elevation only in infancy and old age).
 
 ```{r}
-#| label: fig-personyears
-#| fig-cap: "Person-year exposure for 8 subjects in a hypothetical cohort study"
-#| fig-align: center
+#| label: fig-asdr
+#| fig-cap: "Age-specific death rate pattern (schematic): the universal J/U-shaped curve"
+#| fig-height: 4
 
-set.seed(7)
-py_data <- data.frame(
-  id      = factor(1:8),
-  enter   = c(0,0,0,1,2,0,3,0),
-  exit    = c(3,6,7,8,5,4,10,9),
-  event   = c(TRUE,FALSE,TRUE,FALSE,TRUE,FALSE,FALSE,TRUE)
+age_mid <- c(0.5, 2.5, 7.5, 15, 22, 30, 40, 50, 60, 70, 80)
+asdr_lo  <- c(8, 0.5, 0.2, 0.3, 0.8, 1.0, 2.0, 5.5, 14, 38, 95)   # low mortality
+asdr_hi  <- c(60, 5.0, 2.0, 2.5, 3.5, 4.5, 8.0, 18, 40, 90, 210)  # high mortality
+
+df_asdr <- data.frame(
+  age  = rep(age_mid, 2),
+  asdr = c(asdr_lo, asdr_hi),
+  Setting = rep(c("Low Mortality","High Mortality"), each = length(age_mid))
 )
 
-ggplot(py_data, aes(y = id)) +
-  geom_segment(aes(x = enter, xend = exit, yend = id),
-               linewidth = 1.4, colour = "#2C7BB6") +
-  geom_point(aes(x = exit,
-                 colour = event, shape = event), size = 3.5) +
-  scale_colour_manual(values = c("TRUE"="#D7191C","FALSE"="#636363"),
-                      labels = c("Censored","Event")) +
-  scale_shape_manual(values  = c("TRUE"=4,"FALSE"=1),
-                     labels  = c("Censored","Event")) +
-  labs(title = "Cohort Study Timeline with Censoring",
-       x = "Time (months)", y = "Subject",
-       colour = NULL, shape = NULL) +
+ggplot(df_asdr, aes(x = age, y = asdr, colour = Setting, linetype = Setting)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2.5) +
+  scale_y_log10(labels = label_comma()) +
+  scale_colour_manual(values = c("Low Mortality" = "#2166ac",
+                                  "High Mortality" = "#d6604d")) +
+  labs(title    = "Age-Specific Death Rates: Two Mortality Regimes",
+       subtitle = "Log scale — note the J/U shape universal to all populations",
+       x = "Age (years)", y = "Deaths per 1,000 (log scale)",
+       colour = NULL, linetype = NULL) +
   theme(legend.position = "bottom")
 ```
 
-## Prevalence and Incidence
+```{r}
+#| label: tbl-asdr-us2003
+#| tbl-cap: "Age-specific death rates: United States, 2003"
+#| echo: true
 
-Two fundamental measures of disease burden:
+us2003 <- data.frame(
+  Age_Group  = c("<1","1–4","5–14","15–24","25–34","35–44",
+                 "45–54","55–64","65–74","75–84","85+"),
+  Deaths     = c(28025,4965,6954,33568,41300,89461,
+                 176781,262519,413497,703024,687852),
+  Population = c(4003606,15765673,40968637,41206163,39872598,44370594,
+                 40804599,27899736,18337044,12868672,4713467)
+) |>
+  mutate(ASDR = round(Deaths / Population * 100000, 1))
 
-| Measure | Definition | When to use |
-|---------|-----------|-------------|
-| **Prevalence** | Proportion of population *currently* with condition | Cross-sectional surveys; chronic disease burden |
-| **Incidence** | Rate of *new* cases per unit time | Aetiology studies; tracking epidemics |
+kbl(us2003,
+    col.names = c("Age Group","Deaths","Population","ASDR (per 100,000)"),
+    align     = "lrrr",
+    format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+                full_width = FALSE, position = "center") |>
+  row_spec(0, bold = TRUE)
+```
 
-The approximate relationship is:
+## Cause-Specific Death Rate (CSDR) {#sec-csdr}
 
-$$\text{Prevalence} \approx \text{Incidence} \times \text{Mean Duration}$$
+$$\boxed{\text{CSDR} = \frac{D_c}{P} \times 100{,}000}$$
 
-This formula (sometimes called **Little's Law** in epidemiology) implies that a high-prevalence disease may have either high incidence *or* long duration (or both).
+where $D_c$ = deaths attributable to a specific cause during the year, and $P$ = mid-year total population.
 
-## Relative Risk and Odds Ratio
+The CSDR isolates the contribution of a specific cause to overall mortality and enables monitoring of disease control programmes.
 
-When comparing mortality or disease rates between two groups (exposed vs unexposed), two measures are routinely used.
+> *Example*: In the United States in 2003, among persons aged 25–34, there were 1,588 deaths attributable to HIV/AIDS with a population of 39,872,598. $$\text{CSDR}_{\text{HIV}} = \frac{1588}{39{,}872{,}598} \times 100{,}000 = 4.0 \text{ per } 100{,}000$$
 
-### Relative Risk (Risk Ratio)
+## Proportional Mortality Ratio (PMR) {#sec-pmr}
 
-Let $p_1$ = risk in exposed group and $p_0$ = risk in unexposed group:
+$$\boxed{\text{PMR} = \frac{D_c}{D_{\text{all}}} \times 100}$$
 
-$$\text{RR} = \frac{p_1}{p_0}$$
+The PMR expresses what *fraction* of all deaths is attributable to a specific cause. It is a proportion, not a rate, and must not be interpreted as the risk of dying from that cause.
 
-- $\text{RR} = 1$: no association
-- $\text{RR} > 1$: exposure increases risk
-- $\text{RR} < 1$: exposure is protective
+::: {.callout-warning title="PMR is not a rate"}
+A high PMR for a cause in Population A compared to Population B does NOT necessarily mean the risk of dying from that cause is higher in A. It may simply mean overall mortality is lower in A (other causes are rarer), leaving that cause a larger share. Always compare cause-specific rates, not PMRs, when assessing absolute risk.
+:::
 
-RR is the natural measure in prospective (cohort) studies.
+```{r}
+#| label: tbl-pmr
+#| tbl-cap: "PMR calculation: 10 leading causes of death, US 2003, ages 25–34"
+#| echo: true
 
-### Odds Ratio
+pmr_df <- data.frame(
+  Rank  = 1:10,
+  Cause = c("Accidents (unintentional injuries)","Suicide","Assault (homicide)",
+            "Malignant neoplasms","Diseases of the heart","HIV disease",
+            "Diabetes mellitus","Cerebrovascular diseases",
+            "Congenital malformations","Influenza & pneumonia"),
+  Deaths = c(12541,5065,4516,3741,3250,1588,657,583,426,373)
+) |>
+  mutate(
+    PMR    = round(Deaths / 41300 * 100, 1),
+    CSDR   = round(Deaths / 39872598 * 100000, 1)
+  )
 
-$$\text{OR} = \frac{p_1/(1-p_1)}{p_0/(1-p_0)}$$
+kbl(pmr_df,
+    col.names = c("Rank","Cause of Death","Deaths","PMR (%)","CSDR (per 100,000)"),
+    align     = "clrcc") |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+                full_width = TRUE) |>
+  row_spec(0, bold = TRUE)
+```
 
-The OR is the only association measure available from case-control studies (where total person-time cannot be computed). For rare events ($p_1, p_0 < 0.1$), OR $\approx$ RR.
+## Infant Mortality Rate (IMR) {#sec-imr}
+
+The IMR is perhaps the single most important mortality indicator for public health, reflecting the quality of antenatal care, postnatal care, nutrition, sanitation, and healthcare access.
+
+$$\boxed{\text{IMR} = \frac{\text{Deaths of children} < 1 \text{ year}}{\text{Live births in the same year}} \times 1000}$$
+
+**Note on the denominator:** Technically, some infant deaths in a given year were born in the *previous* year, and some births in a given year will die in the *next* year. The conventional formula accepts this as an approximation; the errors tend to balance out in large populations.
+
+### Neonatal Mortality Rate (NMR)
+
+$$\text{NMR} = \frac{\text{Deaths} < 28 \text{ days of age}}{\text{Live births}} \times 1000$$
+
+Neonatal deaths primarily reflect events at and immediately around birth: congenital malformations, prematurity, low birth weight, and asphyxia.
+
+### Post-neonatal Mortality Rate (PNMR)
+
+$$\text{PNMR} = \frac{\text{Deaths at 28–364 days of age}}{\text{Live births} - \text{Neonatal deaths}} \times 1000$$
+
+Post-neonatal deaths primarily reflect environmental factors: infectious diseases, malnutrition, and healthcare access.
+
+```{r}
+#| label: fig-imr-decompose
+#| fig-cap: "Decomposition of infant mortality into neonatal and post-neonatal components (illustrative)"
+#| fig-height: 4
+
+imr_df <- data.frame(
+  Component = c("Neonatal (0–27 days)","Post-neonatal (28–364 days)"),
+  Rate = c(4.42, 2.34),
+  Fill = c("#c2a5cf","#a6dba0")
+)
+
+ggplot(imr_df, aes(x = reorder(Component, -Rate), y = Rate, fill = Component)) +
+  geom_col(width = 0.5, colour = "white") +
+  geom_text(aes(label = paste0(Rate, " per 1,000")), vjust = -0.4, size = 4.5) +
+  scale_fill_manual(values = c("#c2a5cf","#a6dba0")) +
+  labs(title    = "Infant Mortality Rate Components (US, 2007)",
+       subtitle = "Total IMR = 6.75 per 1,000 live births",
+       x = NULL, y = "Rate per 1,000 live births") +
+  theme(legend.position = "none") +
+  ylim(0, 6)
+```
+
+## Perinatal Mortality Rate {#sec-perinatal}
+
+The perinatal period captures late fetal deaths plus early neonatal deaths — events most sensitive to obstetric care quality.
+
+$$\text{Perinatal mortality rate} = \frac{\text{Late fetal deaths (} \geq 28 \text{ wk)} + \text{Infant deaths within 7 days}}{\text{Live births} + \text{Late fetal deaths}} \times 1000$$
+
+$$\text{Perinatal mortality ratio} = \frac{\text{Late fetal deaths (} \geq 28 \text{ wk)} + \text{Infant deaths within 7 days}}{\text{Live births}} \times 1000$$
+
+The global average perinatal mortality rate is approximately 47 per 1,000; it is five times higher in developing than in developed regions.
+
+## Maternal Mortality Rate (MMR) {#sec-mmr}
+
+$$\boxed{\text{MMR} = \frac{D_p}{B} \times 100{,}000}$$
+
+where $D_p$ = deaths from puerperal (pregnancy/childbirth-related) causes within 42 days of delivery, and $B$ = live births.
+
+The MMR reflects healthcare access, skilled birth attendance, nutritional status, and socioeconomic conditions. Globally, MMR ranges from under 2 per 100,000 in high-income countries to over 500 per 100,000 in the least developed settings.
+
+The **Maternal Mortality Ratio (MMRT)** uses married women aged 15–49 as the denominator instead of live births:
+
+$$\text{MMRT} = \frac{D_p}{M} \times 100{,}000 \quad \text{and} \quad \text{MMRT} = \text{MMR} \times \text{GMFR}$$
+
+where GMFR = general marital fertility rate and $M$ = number of married women aged 15–49.
+
+## Child Mortality Rate (CMR) — Under-5 Mortality {#sec-cmr}
+
+$$\text{CMR} = \frac{\text{Deaths of children 1–4 years}}{\text{Population aged 0–4 years}} \times 1000$$
+
+The **under-5 mortality rate (U5MR)** is a composite widely used by UNICEF as a measure of child welfare. It includes IMR plus post-infancy mortality.
+
+## Crude Birth Rate (CBR) and General Fertility Rate (GFR) {#sec-cbr}
+
+While birth rates are not mortality measures per se, they are needed to understand population dynamics.
+
+$$\text{CBR} = \frac{B}{P} \times 1000 \qquad \text{GFR} = \frac{B}{W_{15-44}} \times 1000$$
+
+where $W_{15-44}$ = mid-year women aged 15–44. The GFR is more informative because it restricts the denominator to women at reproductive risk.
+
+------------------------------------------------------------------------
+
+# The Lexis Diagram {#sec-lexis}
+
+The **Lexis diagram** is an indispensable conceptual tool in demography, providing a two-dimensional map of individual lives in age–calendar time space.
+
+## Construction
+
+-   **Horizontal axis**: Calendar time $t$
+-   **Vertical axis**: Age (in years)
+-   **Each life**: A diagonal line at 45° starting at the person's birth coordinates $(t_{\text{birth}}, 0)$ and ending at the coordinates of their death $(t_{\text{death}}, a_{\text{death}})$
+
+As time advances (moving right), the person ages (moving up) at the same rate — hence the 45° diagonal.
+
+```{r}
+#| label: fig-lexis
+#| fig-cap: "A Lexis diagram: individual lives as 45° diagonals, deaths as filled points"
+#| fig-height: 5.5
+
+set.seed(42)
+n <- 8
+births <- c(1990, 1991, 1988, 1992, 1985, 1993, 1987, 1994)
+deaths <- c(2025, NA,   2010, NA,   2018, NA,   NA,   2022)
+
+df_lives <- data.frame(
+  id     = 1:n,
+  t_born = births,
+  t_died = deaths,
+  alive  = is.na(deaths)
+) |>
+  mutate(
+    t_end  = ifelse(alive, 2030, t_died),
+    a_end  = t_end - t_born,
+    colour = ifelse(alive, "#2166ac", "#d6604d")
+  )
+
+ggplot(df_lives) +
+  geom_segment(aes(x = t_born, xend = t_end,
+                   y = 0,      yend = a_end,
+                   colour = alive),
+               linewidth = 1.0, alpha = 0.8) +
+  geom_point(data = filter(df_lives, !alive),
+             aes(x = t_died, y = t_died - t_born),
+             colour = "#d6604d", size = 3.5, shape = 19) +
+  geom_vline(xintercept = c(2000, 2010, 2020),
+             linetype = "dashed", colour = "grey60", linewidth = 0.4) +
+  geom_hline(yintercept = c(0, 10, 20, 30, 40),
+             linetype = "dotted", colour = "grey80", linewidth = 0.3) +
+  scale_colour_manual(values = c("TRUE" = "#2166ac", "FALSE" = "#d6604d"),
+                      labels = c("Alive at end","Died"),
+                      name   = "Status") +
+  scale_x_continuous(breaks = seq(1985, 2030, 5)) +
+  scale_y_continuous(breaks = seq(0, 45, 10)) +
+  labs(title    = "Lexis Diagram: Eight Individuals",
+       subtitle = "Filled circles mark deaths; blue lines continue to study end",
+       x = "Calendar year", y = "Age (years)") +
+  theme(legend.position = "bottom")
+```
+
+## Reading the Lexis Diagram
+
+**Vertical cross-section** (a fixed calendar date): Cuts through all life-lines alive on that date — these are the persons counted in a census. They form the denominator of *m*-type (central) rates.
+
+**Horizontal line** (a fixed age): Cuts through all life-lines of persons *reaching* that exact birthday — they form a **birth cohort**. They are the denominator of *q*-type (initial/cohort) rates.
+
+**Square region** (fixed calendar year × fixed age group): Deaths in that square form the numerator of an *m*-type rate.
+
+**Parallelogram region** (follow a cohort across one year of age): Deaths in the parallelogram form the numerator of a *q*-type rate.
+
+------------------------------------------------------------------------
+
+# Period Rates Versus Cohort Rates {#sec-period-cohort}
+
+## Two Approaches to Measuring Mortality
+
+The Lexis diagram reveals two fundamentally different approaches to computing age-specific rates:
+
+| Feature | Period Rate (*m*-type, Central Rate) | Cohort Rate (*q*-type, Initial Rate) |
+|---------------|-----------------------------|-----------------------------|
+| Denominator | Mid-year population at age $x$ | Number who reach exact age $x$ |
+| Symbol | $m_x$ | $q_x$ |
+| Time anchor | Fixed calendar year | Birth cohort |
+| Data availability | Readily available | Requires follow-up |
+| Correspondence principle | Approximately satisfied | Exactly satisfied at person level |
+
+## Central Rate ($m_x$)
+
+$$m_x = \frac{{}_{n}D_x}{{}_{n}P_x}$$
+
+The denominator is the mid-year population aged $[x, x+n)$ — an estimate of the average population exposed to risk during the year. This is the standard ASDR.
+
+## Initial Rate / Probability of Death ($q_x$)
+
+$$q_x = \frac{\text{Deaths between exact ages } x \text{ and } x+1}{\text{Number alive at exact age } x}$$
+
+$q_x$ is the probability that a person alive at exact age $x$ will die before reaching exact age $x+1$. This is the building block of the **life table**.
+
+## Conversion Formula
+
+Under two standard assumptions — (1) mortality does not change with calendar time within the observation window, and (2) deaths are uniformly distributed across each year of age — the following approximate relationship holds:
+
+$$\boxed{q_x = \frac{2m_x}{2 + m_x}}$$
+
+::: {.callout-note title="Derivation outline"}
+Since deaths are assumed uniform across the age interval, the triangle below the parallelogram (in the Lexis diagram) contains exactly half the deaths. The cohort's exposure includes those half-deaths, leading to: $$q_x = \frac{\theta_x}{\theta_x/m_x + \frac{1}{2}\theta_x} = \frac{m_x}{m_x + \frac{1}{2}} = \frac{2m_x}{2 + m_x}$$
+:::
+
+```{r}
+#| label: fig-mx-qx
+#| fig-cap: "Relationship between central rate (m_x) and initial rate (q_x)"
+#| fig-height: 3.5
+
+mx_vals <- seq(0, 0.3, by = 0.001)
+qx_vals <- 2 * mx_vals / (2 + mx_vals)
+
+ggplot(data.frame(mx = mx_vals, qx = qx_vals), aes(x = mx, y = qx)) +
+  geom_line(colour = "#1a6faf", linewidth = 1.3) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey50") +
+  annotate("text", x = 0.25, y = 0.22, label = "q_x = m_x (reference)", 
+           colour = "grey40", size = 3.5, hjust = 0) +
+  labs(title = expression("Converting "~m[x]~" to "~q[x]),
+       subtitle = expression(q[x]~"= 2"*m[x]*" / (2 + "*m[x]*")"),
+       x = expression(m[x]~"(central rate)"),
+       y = expression(q[x]~"(probability of death)"))
+```
+
+**Important exception:** The conversion formula breaks down for the first year of life, where deaths are heavily concentrated in the first few days and weeks (neonatal period). Special separation factors are used for $q_0$ in life table construction.
+
+## Cohort Rates and the Lexis Diagram
+
+In the cohort approach, we track a parallelogram on the Lexis diagram — all individuals born in year $t$ as they age from $x$ to $x+1$. If $P_x$ is the number alive at exact age $x$ and $P_{x+1}$ is the number surviving to exact age $x+1$, then with $D_x$ deaths in the parallelogram:
+
+$$q_x = \frac{D_x}{P_x} \qquad m_x = \frac{D_x}{(P_x + P_{x+1})/2}$$
+
+------------------------------------------------------------------------
+
+# Standardised Death Rates {#sec-standardisation}
+
+## Why Standardise?
+
+Crude death rates confound true differences in age-specific mortality with differences in age structure. Before we can say "Population A has worse mortality than Population B", we must rule out the possibility that A simply has more elderly people.
+
+**Standardisation** creates a rate that removes the effect of age composition, enabling fair comparisons.
+
+```{r}
+#| label: tbl-confounding-example
+#| tbl-cap: "Why crude rates mislead: Age-confounded comparison of two groups"
+#| echo: false
+
+df_conf <- data.frame(
+  Age        = c("0–24", "25–64", "65+", "All ages"),
+  PopA       = c(1000, 3000, 6000, 10000),
+  DeathsA    = c(20,   120,  360,  500),
+  PopB       = c(6000, 3000, 1000, 10000),
+  DeathsB    = c(180,  150,   70,  400)
+) |>
+  mutate(
+    RateA = round(DeathsA / PopA * 1000, 1),
+    RateB = round(DeathsB / PopB * 1000, 1)
+  )
+
+kbl(df_conf,
+    col.names = c("Age","Pop A","Deaths A","Pop B","Deaths B",
+                  "Rate A (‰)","Rate B (‰)"),
+    align = "lrrrrrr",
+    format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped","hover"),
+                full_width = FALSE, position = "center") |>
+  row_spec(4, bold = TRUE, background = "#fff3cd") |>
+  footnote(general = "Group A: CDR = 50/1000 (older structure); Group B: CDR = 40/1000 (younger). 
+  But age-specific rates show B is consistently worse — the crude comparison is misleading.")
+```
+
+## Direct Standardisation {#sec-direct}
+
+**When to use:** Age-specific death rates in each study population are known, and a standard population is available.
+
+**Procedure:** Apply each study population's age-specific rates to the *same* standard population to compute expected deaths; then calculate the rate as if the standard population were the one actually observed.
+
+$$\boxed{\text{Directly Standardised Rate (DSR)} = \frac{\sum_x P_x^s \cdot m_x^{\text{study}}}{\sum_x P_x^s} = \sum_x w_x \cdot m_x^{\text{study}}}$$
+
+where $P_x^s$ = standard population in age group $x$, $m_x^{\text{study}}$ = age-specific rate in the study population, and $w_x = P_x^s / \sum P^s$ = standard weight.
+
+**Standard population:** In India, the most recent census population is used for inter-state comparisons. Internationally, the WHO World Standard Population (2000) is now standard. In the United States, the year 2000 standard replaced the former 1940 standard beginning with 1999 data.
+
+```{r}
+#| label: tbl-direct-std
+#| tbl-cap: "Direct standardisation: Applying study population rates to the Year 2000 US standard"
+#| echo: true
+
+direct_std <- data.frame(
+  Age_Group  = c("<1","1–4","5–14","15–24","25–34","35–44",
+                 "45–54","55–64","65–74","75–84","85+"),
+  Std_Pop    = c(3794901,15191619,39976619,38076743,37233437,
+                 44659185,37030152,23961506,18135514,12314793,4259173),
+  ASDR_2003  = c(700.0,31.5,17.0,81.5,103.6,201.6,
+                 433.2,940.9,2255.0,5463.1,14593.3)   # per 100,000
+) |>
+  mutate(
+    Std_Weight    = Std_Pop / sum(Std_Pop),
+    Expected_Rate = Std_Weight * ASDR_2003
+  )
+
+total_std_pop <- sum(direct_std$Std_Pop)
+dsr <- sum(direct_std$Expected_Rate)
+
+kbl(direct_std |>
+      mutate(across(where(is.numeric), ~ round(.x, 4))) |>
+      select(Age_Group, Std_Pop, ASDR_2003, Std_Weight, Expected_Rate),
+    col.names = c("Age Group","Std. Population","ASDR (per 100k)",
+                  "Weight","Weighted Rate"),
+    align = "lrrrr",
+    format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+                full_width = FALSE, position = "center") |>
+  footnote(general = paste0("Age-adjusted death rate = ",
+                             round(dsr, 1), " per 100,000"))
+```
+
+## Indirect Standardisation and the SMR {#sec-indirect}
+
+**When to use:** Age-specific rates for the study population are *unknown or unreliable* (e.g., small population, incomplete death certification by age). Only the total observed deaths and age distribution of the study population are available.
+
+**Procedure:** Apply the *standard* population's age-specific rates to the study population's age distribution to compute *expected* deaths. Compare observed to expected.
+
+$$\boxed{\text{SMR} = \frac{O}{E} \times 100 = \frac{\sum_x D_x^{\text{study}}}{\sum_x P_x^{\text{study}} \cdot m_x^{\text{standard}}} \times 100}$$
+
+**Interpretation:** - SMR = 100: Observed mortality equals what would be expected from the standard — no excess - SMR \> 100: Excess mortality (study population dying more than expected) - SMR \< 100: Deficit mortality (study population dying less than expected)
+
+```{r}
+#| label: tbl-smr
+#| tbl-cap: "Indirect standardisation: SMR calculation for a fictitious population"
+#| echo: true
+
+smr_df <- data.frame(
+  Age    = c("15–24","25–34","35–44","45–54","55–64"),
+  Pop_Study = c(7989, 37030, 60838, 68687, 55565),
+  Std_Rate  = c(81.5, 103.6, 201.6, 433.2, 940.9)  # per 100,000
+) |>
+  mutate(Expected = Pop_Study * Std_Rate / 100000)
+
+observed_deaths <- 502
+expected_total  <- sum(smr_df$Expected)
+smr_val         <- observed_deaths / expected_total * 100
+
+kbl(smr_df |> mutate(Expected = round(Expected, 1)),
+    col.names = c("Age Group","Study Population","Std Rate (per 100k)","Expected Deaths"),
+    align = "lrrr",
+    format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped","hover"),
+                full_width = FALSE, position = "center") |>
+  footnote(general = paste0(
+    "Total expected = ", round(expected_total, 1),
+    ";  Observed = ", observed_deaths,
+    ";  SMR = ", round(smr_val, 1), "%  (below expectation)"
+  ))
+```
+
+::: {.callout-caution title="Caution with SMR comparisons"}
+SMRs from different studies *cannot* be directly compared unless the same standard population was used for each. Furthermore, as follow-up lengthens toward completeness (everyone dies), the SMR converges to 100 regardless of true mortality differences.
+:::
+
+------------------------------------------------------------------------
+
+# Prevalence and Incidence {#sec-previncid}
+
+These two measures capture different aspects of the burden of disease in a population. Understanding their distinction is essential for epidemiological reasoning.
+
+## Prevalence {#sec-prevalence}
+
+**Prevalence** is the proportion of a population that *currently* has a disease or condition at a defined point (or period) in time.
+
+$$\boxed{\text{Point Prevalence} = \frac{\text{Number of existing cases at a time point}}{\text{Total population at that time point}}}$$
+
+$$\text{Period Prevalence} = \frac{\text{Number of cases existing during a time period}}{\text{Average population during that period}}$$
+
+Prevalence is a *proportion* (dimensionless), not a true rate. Describing it as a "prevalence rate" is technically incorrect, though widespread in practice.
+
+**Uses of prevalence data:** - Describing the health burden of a population - Planning healthcare resource allocation (facilities, personnel, drugs) - Estimating exposure frequencies in populations
+
+**Limitations for aetiological research:** Prevalent cases are by definition *survivors*. Rapidly fatal cases are underrepresented; the prevalent pool may not reflect factors that determine disease onset. This is called **differential survival bias**.
+
+## Incidence {#sec-incidence}
+
+**Incidence** counts only *new* events — cases that commence during the observation period among persons who were previously disease-free.
+
+$$\boxed{\text{Incidence Rate} = \frac{\text{New cases during time period}}{\text{Population at risk during that period}} \times k}$$
+
+The denominator is the **population at risk**: persons who *could* develop the condition. Those who already have it, or who are not biologically capable of developing it, are excluded.
+
+### Cumulative Incidence
+
+When the entire population is followed for a fixed period:
+
+$$\text{Cumulative Incidence (CI)} = \frac{\text{New cases in fixed period}}{\text{Initial population at risk}}$$
+
+CI estimates the *risk* of developing the condition. If follow-up is complete, CI = $q_x$ in life table notation.
+
+### Incidence Density (Person-Time Rate)
+
+When subjects are observed for varying lengths of time:
+
+$$\boxed{\text{Incidence Density} = \frac{\text{New cases during period}}{\text{Total person-time at risk}}}$$
+
+Person-time is the sum of each individual's time under observation. The most common unit is **person-years**.
+
+```{r}
+#| label: tbl-person-years
+#| tbl-cap: "Person-year calculation: 10-year heart disease cohort (50 subjects)"
+#| echo: true
+
+py_df <- data.frame(
+  Subjects_n = c(30, 10, 7, 2, 1),
+  Obs_Years  = c(10, 9, 8, 7, 1)
+) |>
+  mutate(Person_Years = Subjects_n * Obs_Years)
+
+events <- 5
+total_py <- sum(py_df$Person_Years)
+incid_density <- events / total_py * 100
+
+py_table <- bind_rows(
+  py_df,
+  data.frame(
+    Subjects_n = sum(py_df$Subjects_n),
+    Obs_Years = NA,
+    Person_Years = total_py
+  )
+)
+
+kbl(
+  py_table,
+  col.names = c(
+    "Number of Subjects",
+    "Observation (years)",
+    "Person-Years"
+  ),
+  align = "rrr"
+) |>
+  kable_styling(
+    bootstrap_options = c("striped", "hover"),
+    full_width = FALSE,
+    position = "center"
+  ) |>
+  row_spec(nrow(py_table), bold = TRUE) |>
+  footnote(
+    general = paste0(
+      "5 events occurred. Incidence density = 5 / ",
+      total_py,
+      " = ",
+      round(incid_density, 2),
+      " per 100 person-years"
+    )
+  )
+```
+
+## The Prevalence–Incidence Relationship
+
+These three quantities are linked by an approximate formula known as the **steady-state relationship** (analogous to Little's Law in queuing theory):
+
+$$\boxed{P \approx I \times D}$$
+
+where $P$ = prevalence, $I$ = incidence rate, and $D$ = mean duration of disease.
+
+**Implications:**
+
+-   A *high-prevalence* disease with *low incidence* implies **long duration** (chronic disease, e.g., HIV/AIDS after the advent of antiretroviral therapy)
+-   A *high-prevalence* disease with *high incidence* implies **short duration** (acute infectious disease like the common cold)
+-   Effective treatment that shortens duration will *reduce prevalence* even without reducing incidence
+
+```{r}
+#| label: fig-prev-incid
+#| fig-cap: "Incidence vs prevalence: the waterfall–pool analogy"
+#| fig-height: 3.5
+#| echo: false
+
+ggplot() +
+  annotate("rect",  xmin=0.1, xmax=0.4, ymin=0.5, ymax=1.5,
+           fill="#4393c3", alpha=0.4) +
+  annotate("rect",  xmin=0.1, xmax=0.9, ymin=0.0, ymax=0.4,
+           fill="#abd9e9", alpha=0.6) +
+  annotate("rect",  xmin=0.1, xmax=0.9, ymin=-0.2, ymax=0.0,
+           fill="#74add1", alpha=0.5) +
+  annotate("text", x=0.25, y=1.0, label="INCIDENCE\n(new cases flow in)",
+           colour="#1a6faf", fontface="bold", size=3.5) +
+  annotate("text", x=0.5, y=0.2, label="PREVALENCE\n(existing cases)",
+           colour="#08306b", fontface="bold", size=4) +
+  annotate("text", x=0.5, y=-0.1, label="Recovery / Death\n(cases flow out)",
+           colour="#6a3d9a", size=3.2) +
+  annotate("segment", x=0.25, y=0.5, xend=0.25, yend=0.4,
+           arrow=arrow(length=unit(0.2,"cm")),colour="#1a6faf",linewidth=1) +
+  annotate("segment", x=0.5, y=0, xend=0.5, yend=-0.18,
+           arrow=arrow(length=unit(0.2,"cm")),colour="#6a3d9a",linewidth=1) +
+  xlim(0,1) + ylim(-0.3,1.6) +
+  theme_void() +
+  labs(title="Prevalence = Incidence × Duration",
+       subtitle="Incidence fills the pool; recovery and death drain it")
+```
+
+## Attack Rate {#sec-attack-rate}
+
+When a population is exposed to a disease risk for a **limited period** (outbreak, foodborne episode):
+
+$$\boxed{\text{Attack Rate (AR)} = \frac{\text{Ill among exposed}}{\text{Total exposed (ill + well)}} \times 100}$$
+
+The AR is technically a cumulative incidence proportion, not a true rate (the time dimension is unspecified). It is used in outbreak investigations.
+
+> *Example*: At a holiday dinner, 87 people ate roast turkey. Of these, 63 became ill. $$\text{AR} = \frac{63}{87} \times 100 = 72.4\%$$
+
+------------------------------------------------------------------------
+
+# Measures of Association {#sec-association}
+
+When comparing mortality or morbidity between two groups (exposed vs unexposed), epidemiologists use measures of *association* to quantify the relationship between exposure and outcome.
+
+## Relative Risk (Risk Ratio) {#sec-rr}
+
+$$\boxed{\text{RR} = \frac{p_1}{p_0} = \frac{\text{Risk in exposed}}{\text{Risk in unexposed}}}$$
+
+**Interpretation:** - RR = 1: No association between exposure and outcome - RR \> 1: Exposure associated with *increased* risk - RR \< 1: Exposure associated with *decreased* risk (protective)
+
+RR is the natural measure in **prospective cohort studies** where the absolute risk in each group can be estimated.
+
+## Odds Ratio {#sec-or}
+
+$$\boxed{\text{OR} = \frac{p_1 / (1-p_1)}{p_0 / (1-p_0)} = \frac{a \cdot d}{b \cdot c}}$$
+
+where $a, b, c, d$ are cells in the standard 2×2 contingency table.
+
+The OR is the *only* association measure that can be estimated from **case-control studies** (where sampling is based on outcome, not exposure). For rare outcomes ($p < 0.1$), OR ≈ RR.
 
 ```{r}
 #| label: tbl-2x2
-#| tbl-cap: "2×2 contingency table: Exposed vs unexposed, disease vs no disease"
+#| tbl-cap: "2×2 table: Calculating risk ratio and odds ratio"
 #| echo: true
 
-ct <- matrix(c(80, 120, 30, 270), nrow = 2,
+ct <- matrix(c(80, 120, 30, 270),
+             nrow = 2, byrow = TRUE,
              dimnames = list(c("Exposed","Unexposed"),
-                             c("Disease","No Disease")))
+                             c("Outcome +","Outcome −")))
+
 ct_df <- as.data.frame.matrix(ct) |>
   mutate(Total = rowSums(across(everything())),
-         Risk  = Disease / Total)
+         Risk  = round(`Outcome +` / Total, 3))
 
-ct_df |>
-  kbl(align = "c",
-      col.names = c("Disease","No Disease","Total","Risk")) |>
-  kable_styling(bootstrap_options = c("striped","condensed"),
+kbl(ct_df,
+    col.names = c("Outcome +","Outcome −","Total","Risk"),
+    align     = "rrrr") |>
+  kable_styling(bootstrap_options = c("striped","hover"),
                 full_width = FALSE, position = "center") |>
   add_header_above(c(" " = 1, "Outcome" = 2, " " = 2))
 
-# Compute measures
 p1  <- ct[1,1] / sum(ct[1,])
 p0  <- ct[2,1] / sum(ct[2,])
 rr  <- p1 / p0
-or  <- (ct[1,1]*ct[2,2]) / (ct[1,2]*ct[2,1])
-cat(sprintf("\nRisk (exposed)   = %.3f\nRisk (unexposed) = %.3f\n", p1, p0))
-cat(sprintf("Relative Risk    = %.2f\nOdds Ratio       = %.2f\n", rr, or))
+or  <- (ct[1,1] * ct[2,2]) / (ct[1,2] * ct[2,1])
+
+cat(sprintf(
+  "\nRisk (exposed)   = %.3f\nRisk (unexposed) = %.3f\n\nRR = %.2f  (exposed have %.0f%% higher risk)\nOR = %.2f  (OR ≈ RR since disease is uncommon)\n",
+  p1, p0, rr, (rr-1)*100, or
+))
 ```
 
-::: {.callout-tip title="Quotes to Inspire"}
-*"To call in the statistician after the experiment is done may be no more than asking him to perform a post-mortem examination: he may be able to say what the experiment died of."*\
+## Case Fatality Rate (CFR) {#sec-cfr}
+
+The CFR measures the risk of dying *given* that one has the disease. It is used primarily for acute conditions of short duration.
+
+$$\boxed{\text{CFR} = \frac{\text{Deaths from disease } C \text{ during period}}{\text{New cases of disease } C \text{ during period}} \times 1000}$$
+
+The CFR should not be confused with the cause-specific death rate, which uses the general population in the denominator.
+
+------------------------------------------------------------------------
+
+# Summary Table: All Morbidity Measures {#sec-morbidity-summary}
+
+```{r}
+#| label: tbl-morbidity-summary
+#| tbl-cap: "Summary of morbidity measures"
+#| echo: false
+
+morb_df <- data.frame(
+  Measure = c("Incidence Rate","Incidence Density","Cumulative Incidence",
+              "Period Prevalence","Point Prevalence","Attack Rate",
+              "Case Fatality Rate","Secondary Attack Rate"),
+  Numerator = c("New cases in period","New cases in period",
+                "New cases in period","Cases existing during period",
+                "Cases at a point in time","Ill among exposed",
+                "Deaths from disease C","New cases among contacts"),
+  Denominator = c("Population at risk (mid-period)",
+                  "Total person-time at risk",
+                  "Initial population at risk",
+                  "Average population","Total population at time point",
+                  "Total exposed (ill + well)",
+                  "New cases of disease C",
+                  "Exposed contacts (excl. index)"),
+  When_used = c("Cohort studies, routine surveillance",
+                "Variable follow-up periods",
+                "Fixed follow-up cohort",
+                "Chronic disease burden",
+                "Cross-sectional surveys",
+                "Outbreak investigations",
+                "Acute conditions",
+                "Infectious disease contact tracing")
+)
+
+kbl(morb_df,
+    col.names = c("Measure","Numerator","Denominator","When Used"),
+    align     = c("l","l","l","l")) |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed","responsive"),
+                full_width = TRUE) |>
+  column_spec(1, bold = TRUE)
+```
+
+------------------------------------------------------------------------
+
+# Software for Mortality Analysis {#sec-software}
+
+## R Packages
+
+For the analyses covered in this unit and beyond, the following R packages are essential:
+
+```{r}
+#| label: tbl-r-packages
+#| tbl-cap: "Key R packages for mortality and morbidity analysis"
+#| echo: false
+
+pkg_df <- data.frame(
+  Package = c("survival","demoR","demography","MortalityLaws",
+              "LifeTable","epiR","epitools","popEpi"),
+  Purpose = c(
+    "Survival analysis, Kaplan-Meier, Cox regression",
+    "Demographic rates, standardisation",
+    "Mortality modelling, Lee-Carter model",
+    "Fitting parametric mortality laws (Gompertz, Makeham, etc.)",
+    "Life table construction from death rates",
+    "Epidemiological measures: RR, OR, SMR, rate differences",
+    "2×2 tables, attack rates, odds ratios",
+    "Person-time, rate standardisation in cohort data"
+  )
+)
+
+kbl(pkg_df, col.names = c("Package","Primary Purpose"), align = "ll") |>
+  kable_styling(bootstrap_options = c("striped","hover"),
+                full_width = TRUE) |>
+  column_spec(1, bold = TRUE, monospace = TRUE)
+```
+
+## PASEX / MORTPAK
+
+For national-level demographic analysis, the UN's **MORTPAK** package and the associated **PASEX spreadsheets** provide specialised tools including:
+
+-   `LTMXQXAD` — Life table construction from ASDRs or $q_x$ values
+-   `ADJMX` — Adjusting mortality patterns to match known death totals
+-   `GRBAL` — Brass method for estimating death registration completeness
+-   `LTNTH / LTSTH / LTWST` — Selection of Coale-Demeny model life tables (North, South, West regions)
+-   `BTHSRV` — Infant mortality estimation from child survival data
+
+------------------------------------------------------------------------
+
+# Worked Examples {#sec-worked}
+
+## Example 1: Full Mortality Profile
+
+A health officer reports the following data for a district in 2023:
+
+-   Mid-year population: 450,000
+-   Total deaths: 3,150
+-   Live births: 12,500
+-   Infant deaths (\< 1 year): 156
+-   Deaths of women from pregnancy-related causes (within 42 days): 18
+-   Deaths of children aged 1–4 years: 42
+-   Mid-year women aged 15–44: 98,000
+
+```{r}
+#| label: example1
+#| echo: true
+
+P   <- 450000
+D   <- 3150
+B   <- 12500
+D0  <- 156      # infant deaths
+D_p <- 18       # maternal deaths
+D14 <- 42       # child (1-4 yr) deaths
+W   <- 98000    # women 15-44
+
+CDR  <- D   / P  * 1000;  cat("CDR  =", round(CDR,  2), "per 1,000\n")
+CBR  <- B   / P  * 1000;  cat("CBR  =", round(CBR,  2), "per 1,000\n")
+IMR  <- D0  / B  * 1000;  cat("IMR  =", round(IMR,  2), "per 1,000 live births\n")
+MMR  <- D_p / B  * 100000;cat("MMR  =", round(MMR,  2), "per 100,000 live births\n")
+GFR  <- B   / W  * 1000;  cat("GFR  =", round(GFR,  2), "per 1,000 women 15-44\n")
+U5MR <- (D0 + D14) / B * 1000; cat("U5MR =", round(U5MR, 2), "per 1,000 live births\n")
+```
+
+## Example 2: Direct Standardisation
+
+Two states A and B have the following mortality data. Compute directly standardised rates using a standard population.
+
+```{r}
+#| label: example2
+#| echo: true
+
+std <- data.frame(
+  age     = c("0-14","15-44","45-64","65+"),
+  std_pop = c(3000, 3000, 3000, 4000),
+  rate_A  = c(20, 40, 60, 70),    # per 1,000
+  rate_B  = c(30, 50, 40, 60)
+)
+
+std <- std |>
+  mutate(
+    w         = std_pop / sum(std_pop),
+    wr_A      = w * rate_A,
+    wr_B      = w * rate_B
+  )
+
+dsr_A <- sum(std$wr_A)
+dsr_B <- sum(std$wr_B)
+
+cat("Crude rate Group A:", round(sum(std$rate_A * std$std_pop)/sum(std$std_pop), 2), "\n")
+cat("Crude rate Group B:", round(sum(std$rate_B * std$std_pop)/sum(std$std_pop), 2), "\n")
+cat("Directly standardised rate A:", round(dsr_A, 2), "per 1,000\n")
+cat("Directly standardised rate B:", round(dsr_B, 2), "per 1,000\n")
+
+kbl(std |>
+      mutate(across(where(is.numeric), ~ round(.x, 3))),
+    col.names = c("Age","Std. Pop","Rate A","Rate B","Weight","wR_A","wR_B"),
+    align     = "lrrrrrrr") |>
+  kable_styling(bootstrap_options = c("striped","hover"),
+                full_width = FALSE, position = "center")
+```
+
+## Example 3: Prevalence–Incidence–Duration Relationship
+
+During a one-year period, a disease has an incidence of 15 per 1,000 per year and an average duration of 3 months (0.25 years). Estimate expected prevalence.
+
+```{r}
+#| label: example3
+#| echo: true
+
+I   <- 15      # incidence per 1,000 per year
+D   <- 0.25    # mean duration in years
+P_expected <- I * D
+cat("Expected prevalence:", P_expected, "per 1,000\n")
+cat("Equivalently:", P_expected / 10, "%\n")
+```
+
+## Example 4: Incidence Density with Person-Years
+
+In a 5-year follow-up of 200 workers exposed to a pesticide, 18 developed a respiratory condition. Due to job changes and losses to follow-up, the total person-years of observation was 762.
+
+```{r}
+#| label: example4
+#| echo: true
+
+events   <- 18
+PY_total <- 762
+
+IR <- events / PY_total * 1000
+cat("Incidence density =", round(IR, 2), "per 1,000 person-years\n")
+
+# Comparison: naive rate (ignoring variable follow-up)
+IR_naive <- events / (200 * 5) * 1000
+cat("Naive rate (assuming all 200 followed for 5 years) =",
+    round(IR_naive, 2), "per 1,000 person-years\n")
+cat("Difference due to losses to follow-up:",
+    round(IR - IR_naive, 2), "per 1,000 PY\n")
+```
+
+------------------------------------------------------------------------
+
+# Key Formulae — Quick Reference {#sec-formulae}
+
+```{r}
+#| label: tbl-quick-ref
+#| tbl-cap: "Quick reference: All key formulae from this unit"
+#| echo: false
+
+qr <- data.frame(
+  Measure = c(
+    "Crude Death Rate","Age-Specific Death Rate","Cause-Specific DR",
+    "PMR","Crude Birth Rate","GFR","IMR","NMR","PNMR","MMR","SMR",
+    "Direct SR","Incidence Rate","Incidence Density","Point Prevalence",
+    "P = I × D","Attack Rate","Case Fatality Rate","Relative Risk","Odds Ratio",
+    "q_x from m_x"
+  ),
+  Formula = c(
+    "D/P × 1,000",
+    "ₙDₓ / ₙPₓ × 1,000",
+    "Dᶜ / P × 100,000",
+    "Dᶜ / D_all × 100",
+    "B / P × 1,000",
+    "B / W₍₁₅₋₄₄₎ × 1,000",
+    "D₍<1yr₎ / B × 1,000",
+    "D₍<28d₎ / B × 1,000",
+    "D₍28-364d₎ / (B - NND) × 1,000",
+    "Dₚ / B × 100,000",
+    "(O / E) × 100",
+    "Σ(wₛ · mˢᵗᵘᵈʸ)",
+    "New cases / Pop-at-risk × k",
+    "New cases / Person-years",
+    "Cases / Total population",
+    "P ≈ I × D",
+    "Ill / (Ill + Well) × 100",
+    "Deaths_C / Cases_C × 1,000",
+    "p₁ / p₀",
+    "(a·d) / (b·c)",
+    "2mₓ / (2 + mₓ)"
+  )
+)
+
+kbl(qr, col.names = c("Measure","Formula"), align = "ll") |>
+  kable_styling(bootstrap_options = c("striped","hover","condensed"),
+                full_width = TRUE) |>
+  column_spec(1, bold = TRUE, width = "40%") |>
+  column_spec(2, monospace = TRUE)
+```
+
+------------------------------------------------------------------------
+
+# Review Questions {#sec-review}
+
+1.  Define and distinguish: count, ratio, proportion, and rate. Give one example of each in the context of mortality.
+
+2.  A city of 500,000 people has 4,200 deaths in a year and 9,800 live births. Compute the CDR, CBR, and GFR (given 115,000 women aged 15–44).
+
+3.  Explain why the CDR of a rapidly ageing population can increase over time even if age-specific death rates at every age are declining. How does standardisation address this?
+
+4.  Using the data below, compute the SMR for the study population relative to the standard:
+
+    | Age Group | Study Pop. | Std Rate (per 1,000) |
+    |-----------|------------|----------------------|
+    | 25–44     | 50,000     | 1.2                  |
+    | 45–64     | 30,000     | 8.5                  |
+    | 65+       | 10,000     | 48.0                 |
+
+    Observed deaths in the study population = 820.
+
+5.  Distinguish between incidence and prevalence. When would you expect prevalence to exceed incidence by a large multiple?
+
+6.  Explain the conversion $q_x = 2m_x / (2 + m_x)$ and state the two assumptions under which it holds. Why does it break down for age 0?
+
+7.  In an outbreak investigation of a foodborne illness, 150 people ate contaminated chicken at a function. Of these, 108 became ill within 48 hours. Calculate the attack rate and interpret your result.
+
+8.  A case-control study of lung cancer finds: cases exposed = 80, cases unexposed = 20, controls exposed = 40, controls unexposed = 60. Compute the odds ratio and interpret.
+
+9.  The prevalence of hypertension in a district is 15% and the mean duration of hypertension is 10 years. Estimate the annual incidence rate (per 100 persons).
+
+10. State three advantages of incidence data over prevalence data for aetiological research.
+
+------------------------------------------------------------------------
+
+# Further Reading {#sec-further}
+
+-   Friis, R. H. & Sellers, T. A. (2014). *Epidemiology for Public Health Practice* (5th ed.). Jones & Bartlett. \[Chapter 3\]
+-   Hinde, A. (1998). *Demographic Methods*. Arnold. \[Chapter 2\]
+-   Preston, S. H., Heuveline, P., & Guillot, M. (2001). *Demography: Measuring and Modeling Population Processes*. Blackwell.
+-   Srinivasan, K. (1998). *Basic Demographic Techniques and Applications*. Sage Publications, New Delhi.
+-   WHO (2006). *Neonatal and Perinatal Mortality: Country, Regional and Global Estimates*. Geneva.
+
+------------------------------------------------------------------------
+
+::: {.callout-tip title="Quote to Reflect On"}
+*"To call in the statistician after the experiment is done may be no more than asking him to perform a post-mortem examination: he may be able to say what the experiment died of."*
+
 **— Sir Ronald A. Fisher**
 :::

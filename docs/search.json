@@ -22,12 +22,12 @@
   {
     "objectID": "unit1_mortality.html",
     "href": "unit1_mortality.html",
-    "title": "1  Measures of Mortality and Morbidity",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
     "section": "",
-    "text": "1.1 Ratios, Proportions, and Rates\nSurvival analysis begins not with equations but with data — specifically, with counts of people or organisms dying, falling ill, or failing over time. This chapter introduces the demographic and epidemiological measures that form the empirical foundation of survival analysis. These measures predate formal survival methods by centuries, yet they remain indispensable: every life table, every actuarial calculation, and every clinical trial protocol rests on the concepts introduced here.\nWe cover rates and ratios, the central mortality measures used in vital statistics, the distinction between prevalence and incidence, and the two key measures of association — relative risk and odds ratio — that arise naturally when comparing mortality experiences across groups.\nThree closely related but distinct measures pervade the literature:\nRatio: A quotient \\(A/B\\) where the numerator is not a subset of the denominator.\nProportion: A quotient \\(A/(A+B)\\) where the numerator is a subset of the denominator. A proportion always lies in \\([0, 1]\\).\nRate: A measure of occurrence per unit of population per unit of time.\nRates are the most informative measure for comparing populations of different sizes, but they require a clear specification of the population at risk and the time period.",
+    "text": "2 Introduction\nSurvival analysis begins not with equations but with data — with counts of people dying, organisms failing, crops succumbing to disease, or patients recovering. Before any formal statistical model can be applied, we need a precise vocabulary for describing how many, how fast, and among whom these events occur. That vocabulary is built from the measures of mortality and morbidity introduced in this unit.\nMortality and morbidity measurement has a history stretching back to John Graunt’s Natural and Political Observations upon the Bills of Mortality (1662), the first systematic demographic analysis of death records. The measures Graunt pioneered — counts, proportions, and rates — remain the empirical foundation of every life table, actuarial calculation, and clinical trial protocol in use today.\nThis unit covers:",
     "crumbs": [
       "UNIT I: Foundations",
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Measures of Mortality and Morbidity</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
     ]
   },
   {
@@ -842,6 +842,424 @@
     "crumbs": [
       "UNIT V: Advanced Topics",
       "<span class='chapter-number'>15</span>  <span class='chapter-title'>Stochastic Epidemic Models</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#mortality",
+    "href": "unit1_mortality.html#mortality",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "3.1 Mortality",
+    "text": "3.1 Mortality\nMortality is defined as the demographic event of death — the permanent departure of an individual from the living population. Because death occurs at most once per individual, mortality analysis is conceptually simpler than fertility analysis (where a birth can occur multiple times to the same woman).\n\n\n\n\n\n\nFormal Definition\n\n\n\nMortality is the rate of death occurring in a defined population during a specified period of time, caused by natural causes, disease, accident, or other factors.\n\n\nMortality analysis begins with good-quality data on deaths and on the population exposed to the risk of dying. These data come from:\n\nVital registration systems (Civil Registration System, CRS)\nSample Registration System (SRS — a dual-record system providing national and state-level estimates)\nPopulation censuses and sample surveys (NSSO, Annual Health Survey)\n\nThe risk of dying is not uniform: it is high in infancy, falls sharply in childhood, reaches a minimum near age 10, then rises progressively — steeply after age 50. This characteristic pattern, shaped like a reverse J-curve, is universal across all human populations, though the level at each age varies with the health environment.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#morbidity",
+    "href": "unit1_mortality.html#morbidity",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "3.2 Morbidity",
+    "text": "3.2 Morbidity\nMorbidity refers to the state of illness or disease in a population — the condition of health rather than the event of death. Morbidity and mortality are interlinked: morbidity may lead to death, but not all deaths are preceded by a recognised morbid episode.\nAccording to the WHO (1946), health is a state of complete physical, mental, and social well-being — not merely the absence of disease. Deviations from this state constitute morbidity.\nThe National Sample Survey Organisation (NSSO) defines an ailment (illness or injury) as any deviation from the state of physical and mental well-being during a reference period, including:\n\nDiseases (communicable and non-communicable)\nInjuries (cuts, fractures, burns, bites)\nDisabilities (visual, hearing, locomotor, mental)\n\n\n\n\n\n\n\nKey Distinction\n\n\n\n\n\n\nFeature\nMortality\nMorbidity\n\n\n\n\nWhat it measures\nRisk of dying\nState of being ill\n\n\nEvent\nDeath (occurs once)\nIllness (may recur)\n\n\nPrimary measure\nDeath rate\nIncidence/Prevalence rate\n\n\nData source\nDeath registers, SRS\nSurveys, hospital records",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#count",
+    "href": "unit1_mortality.html#count",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "5.1 Count",
+    "text": "5.1 Count\nThe simplest measure: the raw number of events (deaths, cases, births) in a population during a time period. Counts are useful for resource allocation but tell us nothing about the size of the underlying population.\n\nExample: 29,153 infant deaths in the United States in 2007.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#ratio",
+    "href": "unit1_mortality.html#ratio",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "5.2 Ratio",
+    "text": "5.2 Ratio\nA ratio is any quotient \\(X / Y\\) where \\(X\\) and \\(Y\\) need not be related subsets. Ratios express one quantity relative to another.\n\\[\\text{Ratio} = \\frac{X}{Y}\\]\n\nExample: Sex ratio = (number of males / number of females) × 100. In the United States (2010): \\((151{,}781{,}326 / 156{,}964{,}212) \\times 100 = 96.7\\), indicating more females than males.\n\nThe sex ratio at birth is defined as:\n\\[\\text{Sex ratio at birth} = \\frac{\\text{Number of male births}}{\\text{Number of female births}} \\times 1000\\]",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#proportion",
+    "href": "unit1_mortality.html#proportion",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "5.3 Proportion",
+    "text": "5.3 Proportion\nA proportion is a ratio where the numerator is a subset of the denominator. Proportions lie in \\([0,1]\\) and may be expressed as percentages.\n\\[\\text{Proportion} = \\frac{A}{A + B}\\]\n\nExample: If 1,150 deaths occurred among African-American boys and 3,810 among white boys (ages 5–14), the proportion of deaths accounted for by African-American boys is \\((1150/4960) \\times 100 = 23.2\\%\\).",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#rate",
+    "href": "unit1_mortality.html#rate",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "5.4 Rate",
+    "text": "5.4 Rate\nA rate is a special ratio in which:\n\nThe numerator = frequency of events during a specified time period\nThe denominator = the population at risk of experiencing those events during the same period\nA multiplier (10, 100, 1,000, or 100,000) makes the rate interpretable as an integer\n\n\\[\\text{Rate} = \\frac{\\text{Number of events in period}}{\\text{Population at risk in period}} \\times k\\]\nRates enable comparisons across populations of different sizes. They are the workhorse of epidemiology and demography.\n\n\n\n\n\n\n\n\nFigure 5.1: Hierarchy of epidemiological measures",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-cdr",
+    "href": "unit1_mortality.html#sec-cdr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.1 Crude Death Rate (CDR)",
+    "text": "6.1 Crude Death Rate (CDR)\nThe Crude Death Rate is the simplest and most widely reported measure of overall mortality. It gives the number of deaths per 1,000 mid-year population during a calendar year.\n\\[\\boxed{\\text{CDR} = \\frac{D}{P} \\times 1000}\\]\nwhere \\(D\\) = total deaths during the year, and \\(P\\) = mid-year population.\n\n\n\n\n\n\nWhy mid-year population?\n\n\n\nThe population changes continuously throughout the year through births, deaths, and migration. The mid-year population (estimated as the population on 1 July) is the conventional approximation to the average population at risk during the year.\n\n\nStrengths: Simple to compute; requires only total deaths and population.\nLimitations: “Crude” means no adjustment for the age-sex composition of the population. Two populations can have very different age structures yet similar CDRs (or vice versa). A population with a higher proportion of elderly will have a higher CDR purely because of its age structure, not because mortality at any given age is worse.\n\n\nCode\ncdr_df &lt;- data.frame(\n  Country  = c(\"Country A (young)\", \"Country B (old)\"),\n  Deaths   = c(50000, 90000),\n  MidYrPop = c(10e6, 10e6)\n) |&gt;\n  mutate(CDR = round(Deaths / MidYrPop * 1000, 1))\n\nkbl(cdr_df,\n    col.names = c(\"Population\",\"Deaths\",\"Mid-year Pop.\",\"CDR (per 1,000)\"),\n    align     = \"lrrr\",\n    format.args = list(big.mark = \",\")) |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  footnote(general = \"Both populations have the same size. Country B's higher CDR\n  may simply reflect an older age structure, not worse health at any given age.\")\n\n\n\n\nTable 6.2: Illustrative CDR calculation: Why crude rates mislead\n\n\n\n\n\n\n\n\n\n\n\n\nPopulation\nDeaths\nMid-year Pop.\nCDR (per 1,000)\n\n\n\n\nCountry A (young)\n50,000\n1e+07\n5\n\n\nCountry B (old)\n90,000\n1e+07\n9\n\n\n\nNote: \n\n\n\n\n\n Both populations have the same size. Country B's higher CDR\nmay simply reflect an older age structure, not worse health at any given age.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-asdr",
+    "href": "unit1_mortality.html#sec-asdr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.2 Age-Specific Death Rate (ASDR)",
+    "text": "6.2 Age-Specific Death Rate (ASDR)\nThe ASDR controls for age by computing the death rate within each age stratum:\n\\[\\boxed{\\text{ASDR}_{[x,x+n)} = \\frac{{}_{n}D_x}{{}_{n}P_x} \\times 1000}\\]\nwhere \\({}_{n}D_x\\) = deaths between exact ages \\(x\\) and \\(x+n\\), and \\({}_{n}P_x\\) = mid-year population in that age group.\nThe universal pattern of age-specific mortality (for any human population):\n\nInfancy: very high — the neonatal hazard\nAges 1–10: rapid decline to a minimum\nAdolescence/early adulthood: slight rise (accidents, violence)\nMiddle age onwards: steady exponential increase\nOld age (&gt;50): steep acceleration\n\nIn high-mortality settings, the ASDRs form a U-shaped curve (high at both extremes). In low-mortality settings, the shape is more J-shaped (dominant elevation only in infancy and old age).\n\n\nCode\nage_mid &lt;- c(0.5, 2.5, 7.5, 15, 22, 30, 40, 50, 60, 70, 80)\nasdr_lo  &lt;- c(8, 0.5, 0.2, 0.3, 0.8, 1.0, 2.0, 5.5, 14, 38, 95)   # low mortality\nasdr_hi  &lt;- c(60, 5.0, 2.0, 2.5, 3.5, 4.5, 8.0, 18, 40, 90, 210)  # high mortality\n\ndf_asdr &lt;- data.frame(\n  age  = rep(age_mid, 2),\n  asdr = c(asdr_lo, asdr_hi),\n  Setting = rep(c(\"Low Mortality\",\"High Mortality\"), each = length(age_mid))\n)\n\nggplot(df_asdr, aes(x = age, y = asdr, colour = Setting, linetype = Setting)) +\n  geom_line(linewidth = 1.2) +\n  geom_point(size = 2.5) +\n  scale_y_log10(labels = label_comma()) +\n  scale_colour_manual(values = c(\"Low Mortality\" = \"#2166ac\",\n                                  \"High Mortality\" = \"#d6604d\")) +\n  labs(title    = \"Age-Specific Death Rates: Two Mortality Regimes\",\n       subtitle = \"Log scale — note the J/U shape universal to all populations\",\n       x = \"Age (years)\", y = \"Deaths per 1,000 (log scale)\",\n       colour = NULL, linetype = NULL) +\n  theme(legend.position = \"bottom\")\n\n\n\n\n\n\n\n\nFigure 6.1: Age-specific death rate pattern (schematic): the universal J/U-shaped curve\n\n\n\n\n\n\n\nCode\nus2003 &lt;- data.frame(\n  Age_Group  = c(\"&lt;1\",\"1–4\",\"5–14\",\"15–24\",\"25–34\",\"35–44\",\n                 \"45–54\",\"55–64\",\"65–74\",\"75–84\",\"85+\"),\n  Deaths     = c(28025,4965,6954,33568,41300,89461,\n                 176781,262519,413497,703024,687852),\n  Population = c(4003606,15765673,40968637,41206163,39872598,44370594,\n                 40804599,27899736,18337044,12868672,4713467)\n) |&gt;\n  mutate(ASDR = round(Deaths / Population * 100000, 1))\n\nkbl(us2003,\n    col.names = c(\"Age Group\",\"Deaths\",\"Population\",\"ASDR (per 100,000)\"),\n    align     = \"lrrr\",\n    format.args = list(big.mark = \",\")) |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\",\"condensed\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  row_spec(0, bold = TRUE)\n\n\n\n\nTable 6.3: Age-specific death rates: United States, 2003\n\n\n\n\n\n\nAge Group\nDeaths\nPopulation\nASDR (per 100,000)\n\n\n\n\n&lt;1\n28,025\n4,003,606\n700.0\n\n\n1–4\n4,965\n15,765,673\n31.5\n\n\n5–14\n6,954\n40,968,637\n17.0\n\n\n15–24\n33,568\n41,206,163\n81.5\n\n\n25–34\n41,300\n39,872,598\n103.6\n\n\n35–44\n89,461\n44,370,594\n201.6\n\n\n45–54\n176,781\n40,804,599\n433.2\n\n\n55–64\n262,519\n27,899,736\n940.9\n\n\n65–74\n413,497\n18,337,044\n2,255.0\n\n\n75–84\n703,024\n12,868,672\n5,463.1\n\n\n85+\n687,852\n4,713,467\n14,593.3",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-csdr",
+    "href": "unit1_mortality.html#sec-csdr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.3 Cause-Specific Death Rate (CSDR)",
+    "text": "6.3 Cause-Specific Death Rate (CSDR)\n\\[\\boxed{\\text{CSDR} = \\frac{D_c}{P} \\times 100{,}000}\\]\nwhere \\(D_c\\) = deaths attributable to a specific cause during the year, and \\(P\\) = mid-year total population.\nThe CSDR isolates the contribution of a specific cause to overall mortality and enables monitoring of disease control programmes.\n\nExample: In the United States in 2003, among persons aged 25–34, there were 1,588 deaths attributable to HIV/AIDS with a population of 39,872,598. \\[\\text{CSDR}_{\\text{HIV}} = \\frac{1588}{39{,}872{,}598} \\times 100{,}000 = 4.0 \\text{ per } 100{,}000\\]",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-pmr",
+    "href": "unit1_mortality.html#sec-pmr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.4 Proportional Mortality Ratio (PMR)",
+    "text": "6.4 Proportional Mortality Ratio (PMR)\n\\[\\boxed{\\text{PMR} = \\frac{D_c}{D_{\\text{all}}} \\times 100}\\]\nThe PMR expresses what fraction of all deaths is attributable to a specific cause. It is a proportion, not a rate, and must not be interpreted as the risk of dying from that cause.\n\n\n\n\n\n\nPMR is not a rate\n\n\n\nA high PMR for a cause in Population A compared to Population B does NOT necessarily mean the risk of dying from that cause is higher in A. It may simply mean overall mortality is lower in A (other causes are rarer), leaving that cause a larger share. Always compare cause-specific rates, not PMRs, when assessing absolute risk.\n\n\n\n\nCode\npmr_df &lt;- data.frame(\n  Rank  = 1:10,\n  Cause = c(\"Accidents (unintentional injuries)\",\"Suicide\",\"Assault (homicide)\",\n            \"Malignant neoplasms\",\"Diseases of the heart\",\"HIV disease\",\n            \"Diabetes mellitus\",\"Cerebrovascular diseases\",\n            \"Congenital malformations\",\"Influenza & pneumonia\"),\n  Deaths = c(12541,5065,4516,3741,3250,1588,657,583,426,373)\n) |&gt;\n  mutate(\n    PMR    = round(Deaths / 41300 * 100, 1),\n    CSDR   = round(Deaths / 39872598 * 100000, 1)\n  )\n\nkbl(pmr_df,\n    col.names = c(\"Rank\",\"Cause of Death\",\"Deaths\",\"PMR (%)\",\"CSDR (per 100,000)\"),\n    align     = \"clrcc\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\",\"condensed\"),\n                full_width = TRUE) |&gt;\n  row_spec(0, bold = TRUE)\n\n\n\n\nTable 6.4: PMR calculation: 10 leading causes of death, US 2003, ages 25–34\n\n\n\n\n\n\nRank\nCause of Death\nDeaths\nPMR (%)\nCSDR (per 100,000)\n\n\n\n\n1\nAccidents (unintentional injuries)\n12541\n30.4\n31.5\n\n\n2\nSuicide\n5065\n12.3\n12.7\n\n\n3\nAssault (homicide)\n4516\n10.9\n11.3\n\n\n4\nMalignant neoplasms\n3741\n9.1\n9.4\n\n\n5\nDiseases of the heart\n3250\n7.9\n8.2\n\n\n6\nHIV disease\n1588\n3.8\n4.0\n\n\n7\nDiabetes mellitus\n657\n1.6\n1.6\n\n\n8\nCerebrovascular diseases\n583\n1.4\n1.5\n\n\n9\nCongenital malformations\n426\n1.0\n1.1\n\n\n10\nInfluenza & pneumonia\n373\n0.9\n0.9",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-imr",
+    "href": "unit1_mortality.html#sec-imr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.5 Infant Mortality Rate (IMR)",
+    "text": "6.5 Infant Mortality Rate (IMR)\nThe IMR is perhaps the single most important mortality indicator for public health, reflecting the quality of antenatal care, postnatal care, nutrition, sanitation, and healthcare access.\n\\[\\boxed{\\text{IMR} = \\frac{\\text{Deaths of children} &lt; 1 \\text{ year}}{\\text{Live births in the same year}} \\times 1000}\\]\nNote on the denominator: Technically, some infant deaths in a given year were born in the previous year, and some births in a given year will die in the next year. The conventional formula accepts this as an approximation; the errors tend to balance out in large populations.\n\n6.5.1 Neonatal Mortality Rate (NMR)\n\\[\\text{NMR} = \\frac{\\text{Deaths} &lt; 28 \\text{ days of age}}{\\text{Live births}} \\times 1000\\]\nNeonatal deaths primarily reflect events at and immediately around birth: congenital malformations, prematurity, low birth weight, and asphyxia.\n\n\n6.5.2 Post-neonatal Mortality Rate (PNMR)\n\\[\\text{PNMR} = \\frac{\\text{Deaths at 28–364 days of age}}{\\text{Live births} - \\text{Neonatal deaths}} \\times 1000\\]\nPost-neonatal deaths primarily reflect environmental factors: infectious diseases, malnutrition, and healthcare access.\n\n\nCode\nimr_df &lt;- data.frame(\n  Component = c(\"Neonatal (0–27 days)\",\"Post-neonatal (28–364 days)\"),\n  Rate = c(4.42, 2.34),\n  Fill = c(\"#c2a5cf\",\"#a6dba0\")\n)\n\nggplot(imr_df, aes(x = reorder(Component, -Rate), y = Rate, fill = Component)) +\n  geom_col(width = 0.5, colour = \"white\") +\n  geom_text(aes(label = paste0(Rate, \" per 1,000\")), vjust = -0.4, size = 4.5) +\n  scale_fill_manual(values = c(\"#c2a5cf\",\"#a6dba0\")) +\n  labs(title    = \"Infant Mortality Rate Components (US, 2007)\",\n       subtitle = \"Total IMR = 6.75 per 1,000 live births\",\n       x = NULL, y = \"Rate per 1,000 live births\") +\n  theme(legend.position = \"none\") +\n  ylim(0, 6)\n\n\n\n\n\n\n\n\nFigure 6.2: Decomposition of infant mortality into neonatal and post-neonatal components (illustrative)",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-perinatal",
+    "href": "unit1_mortality.html#sec-perinatal",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.6 Perinatal Mortality Rate",
+    "text": "6.6 Perinatal Mortality Rate\nThe perinatal period captures late fetal deaths plus early neonatal deaths — events most sensitive to obstetric care quality.\n\\[\\text{Perinatal mortality rate} = \\frac{\\text{Late fetal deaths (} \\geq 28 \\text{ wk)} + \\text{Infant deaths within 7 days}}{\\text{Live births} + \\text{Late fetal deaths}} \\times 1000\\]\n\\[\\text{Perinatal mortality ratio} = \\frac{\\text{Late fetal deaths (} \\geq 28 \\text{ wk)} + \\text{Infant deaths within 7 days}}{\\text{Live births}} \\times 1000\\]\nThe global average perinatal mortality rate is approximately 47 per 1,000; it is five times higher in developing than in developed regions.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-mmr",
+    "href": "unit1_mortality.html#sec-mmr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.7 Maternal Mortality Rate (MMR)",
+    "text": "6.7 Maternal Mortality Rate (MMR)\n\\[\\boxed{\\text{MMR} = \\frac{D_p}{B} \\times 100{,}000}\\]\nwhere \\(D_p\\) = deaths from puerperal (pregnancy/childbirth-related) causes within 42 days of delivery, and \\(B\\) = live births.\nThe MMR reflects healthcare access, skilled birth attendance, nutritional status, and socioeconomic conditions. Globally, MMR ranges from under 2 per 100,000 in high-income countries to over 500 per 100,000 in the least developed settings.\nThe Maternal Mortality Ratio (MMRT) uses married women aged 15–49 as the denominator instead of live births:\n\\[\\text{MMRT} = \\frac{D_p}{M} \\times 100{,}000 \\quad \\text{and} \\quad \\text{MMRT} = \\text{MMR} \\times \\text{GMFR}\\]\nwhere GMFR = general marital fertility rate and \\(M\\) = number of married women aged 15–49.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-cmr",
+    "href": "unit1_mortality.html#sec-cmr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.8 Child Mortality Rate (CMR) — Under-5 Mortality",
+    "text": "6.8 Child Mortality Rate (CMR) — Under-5 Mortality\n\\[\\text{CMR} = \\frac{\\text{Deaths of children 1–4 years}}{\\text{Population aged 0–4 years}} \\times 1000\\]\nThe under-5 mortality rate (U5MR) is a composite widely used by UNICEF as a measure of child welfare. It includes IMR plus post-infancy mortality.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-cbr",
+    "href": "unit1_mortality.html#sec-cbr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "6.9 Crude Birth Rate (CBR) and General Fertility Rate (GFR)",
+    "text": "6.9 Crude Birth Rate (CBR) and General Fertility Rate (GFR)\nWhile birth rates are not mortality measures per se, they are needed to understand population dynamics.\n\\[\\text{CBR} = \\frac{B}{P} \\times 1000 \\qquad \\text{GFR} = \\frac{B}{W_{15-44}} \\times 1000\\]\nwhere \\(W_{15-44}\\) = mid-year women aged 15–44. The GFR is more informative because it restricts the denominator to women at reproductive risk.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#construction",
+    "href": "unit1_mortality.html#construction",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "7.1 Construction",
+    "text": "7.1 Construction\n\nHorizontal axis: Calendar time \\(t\\)\nVertical axis: Age (in years)\nEach life: A diagonal line at 45° starting at the person’s birth coordinates \\((t_{\\text{birth}}, 0)\\) and ending at the coordinates of their death \\((t_{\\text{death}}, a_{\\text{death}})\\)\n\nAs time advances (moving right), the person ages (moving up) at the same rate — hence the 45° diagonal.\n\n\nCode\nset.seed(42)\nn &lt;- 8\nbirths &lt;- c(1990, 1991, 1988, 1992, 1985, 1993, 1987, 1994)\ndeaths &lt;- c(2025, NA,   2010, NA,   2018, NA,   NA,   2022)\n\ndf_lives &lt;- data.frame(\n  id     = 1:n,\n  t_born = births,\n  t_died = deaths,\n  alive  = is.na(deaths)\n) |&gt;\n  mutate(\n    t_end  = ifelse(alive, 2030, t_died),\n    a_end  = t_end - t_born,\n    colour = ifelse(alive, \"#2166ac\", \"#d6604d\")\n  )\n\nggplot(df_lives) +\n  geom_segment(aes(x = t_born, xend = t_end,\n                   y = 0,      yend = a_end,\n                   colour = alive),\n               linewidth = 1.0, alpha = 0.8) +\n  geom_point(data = filter(df_lives, !alive),\n             aes(x = t_died, y = t_died - t_born),\n             colour = \"#d6604d\", size = 3.5, shape = 19) +\n  geom_vline(xintercept = c(2000, 2010, 2020),\n             linetype = \"dashed\", colour = \"grey60\", linewidth = 0.4) +\n  geom_hline(yintercept = c(0, 10, 20, 30, 40),\n             linetype = \"dotted\", colour = \"grey80\", linewidth = 0.3) +\n  scale_colour_manual(values = c(\"TRUE\" = \"#2166ac\", \"FALSE\" = \"#d6604d\"),\n                      labels = c(\"Alive at end\",\"Died\"),\n                      name   = \"Status\") +\n  scale_x_continuous(breaks = seq(1985, 2030, 5)) +\n  scale_y_continuous(breaks = seq(0, 45, 10)) +\n  labs(title    = \"Lexis Diagram: Eight Individuals\",\n       subtitle = \"Filled circles mark deaths; blue lines continue to study end\",\n       x = \"Calendar year\", y = \"Age (years)\") +\n  theme(legend.position = \"bottom\")\n\n\n\n\n\n\n\n\nFigure 7.1: A Lexis diagram: individual lives as 45° diagonals, deaths as filled points",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#reading-the-lexis-diagram",
+    "href": "unit1_mortality.html#reading-the-lexis-diagram",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "7.2 Reading the Lexis Diagram",
+    "text": "7.2 Reading the Lexis Diagram\nVertical cross-section (a fixed calendar date): Cuts through all life-lines alive on that date — these are the persons counted in a census. They form the denominator of m-type (central) rates.\nHorizontal line (a fixed age): Cuts through all life-lines of persons reaching that exact birthday — they form a birth cohort. They are the denominator of q-type (initial/cohort) rates.\nSquare region (fixed calendar year × fixed age group): Deaths in that square form the numerator of an m-type rate.\nParallelogram region (follow a cohort across one year of age): Deaths in the parallelogram form the numerator of a q-type rate.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#two-approaches-to-measuring-mortality",
+    "href": "unit1_mortality.html#two-approaches-to-measuring-mortality",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "8.1 Two Approaches to Measuring Mortality",
+    "text": "8.1 Two Approaches to Measuring Mortality\nThe Lexis diagram reveals two fundamentally different approaches to computing age-specific rates:\n\n\n\n\n\n\n\n\nFeature\nPeriod Rate (m-type, Central Rate)\nCohort Rate (q-type, Initial Rate)\n\n\n\n\nDenominator\nMid-year population at age \\(x\\)\nNumber who reach exact age \\(x\\)\n\n\nSymbol\n\\(m_x\\)\n\\(q_x\\)\n\n\nTime anchor\nFixed calendar year\nBirth cohort\n\n\nData availability\nReadily available\nRequires follow-up\n\n\nCorrespondence principle\nApproximately satisfied\nExactly satisfied at person level",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#central-rate-m_x",
+    "href": "unit1_mortality.html#central-rate-m_x",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "8.2 Central Rate (\\(m_x\\))",
+    "text": "8.2 Central Rate (\\(m_x\\))\n\\[m_x = \\frac{{}_{n}D_x}{{}_{n}P_x}\\]\nThe denominator is the mid-year population aged \\([x, x+n)\\) — an estimate of the average population exposed to risk during the year. This is the standard ASDR.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#initial-rate-probability-of-death-q_x",
+    "href": "unit1_mortality.html#initial-rate-probability-of-death-q_x",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "8.3 Initial Rate / Probability of Death (\\(q_x\\))",
+    "text": "8.3 Initial Rate / Probability of Death (\\(q_x\\))\n\\[q_x = \\frac{\\text{Deaths between exact ages } x \\text{ and } x+1}{\\text{Number alive at exact age } x}\\]\n\\(q_x\\) is the probability that a person alive at exact age \\(x\\) will die before reaching exact age \\(x+1\\). This is the building block of the life table.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#conversion-formula",
+    "href": "unit1_mortality.html#conversion-formula",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "8.4 Conversion Formula",
+    "text": "8.4 Conversion Formula\nUnder two standard assumptions — (1) mortality does not change with calendar time within the observation window, and (2) deaths are uniformly distributed across each year of age — the following approximate relationship holds:\n\\[\\boxed{q_x = \\frac{2m_x}{2 + m_x}}\\]\n\n\n\n\n\n\nDerivation outline\n\n\n\nSince deaths are assumed uniform across the age interval, the triangle below the parallelogram (in the Lexis diagram) contains exactly half the deaths. The cohort’s exposure includes those half-deaths, leading to: \\[q_x = \\frac{\\theta_x}{\\theta_x/m_x + \\frac{1}{2}\\theta_x} = \\frac{m_x}{m_x + \\frac{1}{2}} = \\frac{2m_x}{2 + m_x}\\]\n\n\n\n\nCode\nmx_vals &lt;- seq(0, 0.3, by = 0.001)\nqx_vals &lt;- 2 * mx_vals / (2 + mx_vals)\n\nggplot(data.frame(mx = mx_vals, qx = qx_vals), aes(x = mx, y = qx)) +\n  geom_line(colour = \"#1a6faf\", linewidth = 1.3) +\n  geom_abline(slope = 1, intercept = 0, linetype = \"dashed\", colour = \"grey50\") +\n  annotate(\"text\", x = 0.25, y = 0.22, label = \"q_x = m_x (reference)\", \n           colour = \"grey40\", size = 3.5, hjust = 0) +\n  labs(title = expression(\"Converting \"~m[x]~\" to \"~q[x]),\n       subtitle = expression(q[x]~\"= 2\"*m[x]*\" / (2 + \"*m[x]*\")\"),\n       x = expression(m[x]~\"(central rate)\"),\n       y = expression(q[x]~\"(probability of death)\"))\n\n\n\n\n\n\n\n\nFigure 8.1: Relationship between central rate (m_x) and initial rate (q_x)\n\n\n\n\n\nImportant exception: The conversion formula breaks down for the first year of life, where deaths are heavily concentrated in the first few days and weeks (neonatal period). Special separation factors are used for \\(q_0\\) in life table construction.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#cohort-rates-and-the-lexis-diagram",
+    "href": "unit1_mortality.html#cohort-rates-and-the-lexis-diagram",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "8.5 Cohort Rates and the Lexis Diagram",
+    "text": "8.5 Cohort Rates and the Lexis Diagram\nIn the cohort approach, we track a parallelogram on the Lexis diagram — all individuals born in year \\(t\\) as they age from \\(x\\) to \\(x+1\\). If \\(P_x\\) is the number alive at exact age \\(x\\) and \\(P_{x+1}\\) is the number surviving to exact age \\(x+1\\), then with \\(D_x\\) deaths in the parallelogram:\n\\[q_x = \\frac{D_x}{P_x} \\qquad m_x = \\frac{D_x}{(P_x + P_{x+1})/2}\\]",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#why-standardise",
+    "href": "unit1_mortality.html#why-standardise",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "9.1 Why Standardise?",
+    "text": "9.1 Why Standardise?\nCrude death rates confound true differences in age-specific mortality with differences in age structure. Before we can say “Population A has worse mortality than Population B”, we must rule out the possibility that A simply has more elderly people.\nStandardisation creates a rate that removes the effect of age composition, enabling fair comparisons.\n\n\n\n\nTable 9.1: Why crude rates mislead: Age-confounded comparison of two groups\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAge\nPop A\nDeaths A\nPop B\nDeaths B\nRate A (‰)\nRate B (‰)\n\n\n\n\n0–24\n1,000\n20\n6,000\n180\n20\n30\n\n\n25–64\n3,000\n120\n3,000\n150\n40\n50\n\n\n65+\n6,000\n360\n1,000\n70\n60\n70\n\n\nAll ages\n10,000\n500\n10,000\n400\n50\n40\n\n\n\nNote: \n\n\n\n\n\n\n\n\n Group A: CDR = 50/1000 (older structure); Group B: CDR = 40/1000 (younger).\nBut age-specific rates show B is consistently worse — the crude comparison is misleading.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-direct",
+    "href": "unit1_mortality.html#sec-direct",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "9.2 Direct Standardisation",
+    "text": "9.2 Direct Standardisation\nWhen to use: Age-specific death rates in each study population are known, and a standard population is available.\nProcedure: Apply each study population’s age-specific rates to the same standard population to compute expected deaths; then calculate the rate as if the standard population were the one actually observed.\n\\[\\boxed{\\text{Directly Standardised Rate (DSR)} = \\frac{\\sum_x P_x^s \\cdot m_x^{\\text{study}}}{\\sum_x P_x^s} = \\sum_x w_x \\cdot m_x^{\\text{study}}}\\]\nwhere \\(P_x^s\\) = standard population in age group \\(x\\), \\(m_x^{\\text{study}}\\) = age-specific rate in the study population, and \\(w_x = P_x^s / \\sum P^s\\) = standard weight.\nStandard population: In India, the most recent census population is used for inter-state comparisons. Internationally, the WHO World Standard Population (2000) is now standard. In the United States, the year 2000 standard replaced the former 1940 standard beginning with 1999 data.\n\n\nCode\ndirect_std &lt;- data.frame(\n  Age_Group  = c(\"&lt;1\",\"1–4\",\"5–14\",\"15–24\",\"25–34\",\"35–44\",\n                 \"45–54\",\"55–64\",\"65–74\",\"75–84\",\"85+\"),\n  Std_Pop    = c(3794901,15191619,39976619,38076743,37233437,\n                 44659185,37030152,23961506,18135514,12314793,4259173),\n  ASDR_2003  = c(700.0,31.5,17.0,81.5,103.6,201.6,\n                 433.2,940.9,2255.0,5463.1,14593.3)   # per 100,000\n) |&gt;\n  mutate(\n    Std_Weight    = Std_Pop / sum(Std_Pop),\n    Expected_Rate = Std_Weight * ASDR_2003\n  )\n\ntotal_std_pop &lt;- sum(direct_std$Std_Pop)\ndsr &lt;- sum(direct_std$Expected_Rate)\n\nkbl(direct_std |&gt;\n      mutate(across(where(is.numeric), ~ round(.x, 4))) |&gt;\n      select(Age_Group, Std_Pop, ASDR_2003, Std_Weight, Expected_Rate),\n    col.names = c(\"Age Group\",\"Std. Population\",\"ASDR (per 100k)\",\n                  \"Weight\",\"Weighted Rate\"),\n    align = \"lrrrr\",\n    format.args = list(big.mark = \",\")) |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\",\"condensed\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  footnote(general = paste0(\"Age-adjusted death rate = \",\n                             round(dsr, 1), \" per 100,000\"))\n\n\n\n\nTable 9.2: Direct standardisation: Applying study population rates to the Year 2000 US standard\n\n\n\n\n\n\nAge Group\nStd. Population\nASDR (per 100k)\nWeight\nWeighted Rate\n\n\n\n\n&lt;1\n3,794,901\n700.0\n0.0138\n9.6726\n\n\n1–4\n15,191,619\n31.5\n0.0553\n1.7425\n\n\n5–14\n39,976,619\n17.0\n0.1456\n2.4746\n\n\n15–24\n38,076,743\n81.5\n0.1386\n11.2996\n\n\n25–34\n37,233,437\n103.6\n0.1356\n14.0456\n\n\n35–44\n44,659,185\n201.6\n0.1626\n32.7829\n\n\n45–54\n37,030,152\n433.2\n0.1348\n58.4104\n\n\n55–64\n23,961,506\n940.9\n0.0872\n82.0926\n\n\n65–74\n18,135,514\n2,255.0\n0.0660\n148.9096\n\n\n75–84\n12,314,793\n5,463.1\n0.0448\n244.9698\n\n\n85+\n4,259,173\n14,593.3\n0.0155\n226.3211\n\n\n\nNote: \n\n\n\n\n\n\n Age-adjusted death rate = 832.7 per 100,000",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-indirect",
+    "href": "unit1_mortality.html#sec-indirect",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "9.3 Indirect Standardisation and the SMR",
+    "text": "9.3 Indirect Standardisation and the SMR\nWhen to use: Age-specific rates for the study population are unknown or unreliable (e.g., small population, incomplete death certification by age). Only the total observed deaths and age distribution of the study population are available.\nProcedure: Apply the standard population’s age-specific rates to the study population’s age distribution to compute expected deaths. Compare observed to expected.\n\\[\\boxed{\\text{SMR} = \\frac{O}{E} \\times 100 = \\frac{\\sum_x D_x^{\\text{study}}}{\\sum_x P_x^{\\text{study}} \\cdot m_x^{\\text{standard}}} \\times 100}\\]\nInterpretation: - SMR = 100: Observed mortality equals what would be expected from the standard — no excess - SMR &gt; 100: Excess mortality (study population dying more than expected) - SMR &lt; 100: Deficit mortality (study population dying less than expected)\n\n\nCode\nsmr_df &lt;- data.frame(\n  Age    = c(\"15–24\",\"25–34\",\"35–44\",\"45–54\",\"55–64\"),\n  Pop_Study = c(7989, 37030, 60838, 68687, 55565),\n  Std_Rate  = c(81.5, 103.6, 201.6, 433.2, 940.9)  # per 100,000\n) |&gt;\n  mutate(Expected = Pop_Study * Std_Rate / 100000)\n\nobserved_deaths &lt;- 502\nexpected_total  &lt;- sum(smr_df$Expected)\nsmr_val         &lt;- observed_deaths / expected_total * 100\n\nkbl(smr_df |&gt; mutate(Expected = round(Expected, 1)),\n    col.names = c(\"Age Group\",\"Study Population\",\"Std Rate (per 100k)\",\"Expected Deaths\"),\n    align = \"lrrr\",\n    format.args = list(big.mark = \",\")) |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  footnote(general = paste0(\n    \"Total expected = \", round(expected_total, 1),\n    \";  Observed = \", observed_deaths,\n    \";  SMR = \", round(smr_val, 1), \"%  (below expectation)\"\n  ))\n\n\n\n\nTable 9.3: Indirect standardisation: SMR calculation for a fictitious population\n\n\n\n\n\n\nAge Group\nStudy Population\nStd Rate (per 100k)\nExpected Deaths\n\n\n\n\n15–24\n7,989\n81.5\n6.5\n\n\n25–34\n37,030\n103.6\n38.4\n\n\n35–44\n60,838\n201.6\n122.6\n\n\n45–54\n68,687\n433.2\n297.6\n\n\n55–64\n55,565\n940.9\n522.8\n\n\n\nNote: \n\n\n\n\n\n Total expected = 987.9; Observed = 502; SMR = 50.8% (below expectation)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCaution with SMR comparisons\n\n\n\nSMRs from different studies cannot be directly compared unless the same standard population was used for each. Furthermore, as follow-up lengthens toward completeness (everyone dies), the SMR converges to 100 regardless of true mortality differences.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-prevalence",
+    "href": "unit1_mortality.html#sec-prevalence",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "10.1 Prevalence",
+    "text": "10.1 Prevalence\nPrevalence is the proportion of a population that currently has a disease or condition at a defined point (or period) in time.\n\\[\\boxed{\\text{Point Prevalence} = \\frac{\\text{Number of existing cases at a time point}}{\\text{Total population at that time point}}}\\]\n\\[\\text{Period Prevalence} = \\frac{\\text{Number of cases existing during a time period}}{\\text{Average population during that period}}\\]\nPrevalence is a proportion (dimensionless), not a true rate. Describing it as a “prevalence rate” is technically incorrect, though widespread in practice.\nUses of prevalence data: - Describing the health burden of a population - Planning healthcare resource allocation (facilities, personnel, drugs) - Estimating exposure frequencies in populations\nLimitations for aetiological research: Prevalent cases are by definition survivors. Rapidly fatal cases are underrepresented; the prevalent pool may not reflect factors that determine disease onset. This is called differential survival bias.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-incidence",
+    "href": "unit1_mortality.html#sec-incidence",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "10.2 Incidence",
+    "text": "10.2 Incidence\nIncidence counts only new events — cases that commence during the observation period among persons who were previously disease-free.\n\\[\\boxed{\\text{Incidence Rate} = \\frac{\\text{New cases during time period}}{\\text{Population at risk during that period}} \\times k}\\]\nThe denominator is the population at risk: persons who could develop the condition. Those who already have it, or who are not biologically capable of developing it, are excluded.\n\n10.2.1 Cumulative Incidence\nWhen the entire population is followed for a fixed period:\n\\[\\text{Cumulative Incidence (CI)} = \\frac{\\text{New cases in fixed period}}{\\text{Initial population at risk}}\\]\nCI estimates the risk of developing the condition. If follow-up is complete, CI = \\(q_x\\) in life table notation.\n\n\n10.2.2 Incidence Density (Person-Time Rate)\nWhen subjects are observed for varying lengths of time:\n\\[\\boxed{\\text{Incidence Density} = \\frac{\\text{New cases during period}}{\\text{Total person-time at risk}}}\\]\nPerson-time is the sum of each individual’s time under observation. The most common unit is person-years.\n\n\nCode\npy_df &lt;- data.frame(\n  Subjects_n = c(30, 10, 7, 2, 1),\n  Obs_Years  = c(10, 9, 8, 7, 1)\n) |&gt;\n  mutate(Person_Years = Subjects_n * Obs_Years)\n\nevents &lt;- 5\ntotal_py &lt;- sum(py_df$Person_Years)\nincid_density &lt;- events / total_py * 100\n\npy_table &lt;- bind_rows(\n  py_df,\n  data.frame(\n    Subjects_n = sum(py_df$Subjects_n),\n    Obs_Years = NA,\n    Person_Years = total_py\n  )\n)\n\nkbl(\n  py_table,\n  col.names = c(\n    \"Number of Subjects\",\n    \"Observation (years)\",\n    \"Person-Years\"\n  ),\n  align = \"rrr\"\n) |&gt;\n  kable_styling(\n    bootstrap_options = c(\"striped\", \"hover\"),\n    full_width = FALSE,\n    position = \"center\"\n  ) |&gt;\n  row_spec(nrow(py_table), bold = TRUE) |&gt;\n  footnote(\n    general = paste0(\n      \"5 events occurred. Incidence density = 5 / \",\n      total_py,\n      \" = \",\n      round(incid_density, 2),\n      \" per 100 person-years\"\n    )\n  )\n\n\n\n\nTable 10.1: Person-year calculation: 10-year heart disease cohort (50 subjects)\n\n\n\n\n\n\nNumber of Subjects\nObservation (years)\nPerson-Years\n\n\n\n\n30\n10\n300\n\n\n10\n9\n90\n\n\n7\n8\n56\n\n\n2\n7\n14\n\n\n1\n1\n1\n\n\n50\nNA\n461\n\n\n\nNote: \n\n\n\n\n 5 events occurred. Incidence density = 5 / 461 = 1.08 per 100 person-years",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#the-prevalenceincidence-relationship",
+    "href": "unit1_mortality.html#the-prevalenceincidence-relationship",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "10.3 The Prevalence–Incidence Relationship",
+    "text": "10.3 The Prevalence–Incidence Relationship\nThese three quantities are linked by an approximate formula known as the steady-state relationship (analogous to Little’s Law in queuing theory):\n\\[\\boxed{P \\approx I \\times D}\\]\nwhere \\(P\\) = prevalence, \\(I\\) = incidence rate, and \\(D\\) = mean duration of disease.\nImplications:\n\nA high-prevalence disease with low incidence implies long duration (chronic disease, e.g., HIV/AIDS after the advent of antiretroviral therapy)\nA high-prevalence disease with high incidence implies short duration (acute infectious disease like the common cold)\nEffective treatment that shortens duration will reduce prevalence even without reducing incidence\n\n\n\n\n\n\n\n\n\nFigure 10.1: Incidence vs prevalence: the waterfall–pool analogy",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-attack-rate",
+    "href": "unit1_mortality.html#sec-attack-rate",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "10.4 Attack Rate",
+    "text": "10.4 Attack Rate\nWhen a population is exposed to a disease risk for a limited period (outbreak, foodborne episode):\n\\[\\boxed{\\text{Attack Rate (AR)} = \\frac{\\text{Ill among exposed}}{\\text{Total exposed (ill + well)}} \\times 100}\\]\nThe AR is technically a cumulative incidence proportion, not a true rate (the time dimension is unspecified). It is used in outbreak investigations.\n\nExample: At a holiday dinner, 87 people ate roast turkey. Of these, 63 became ill. \\[\\text{AR} = \\frac{63}{87} \\times 100 = 72.4\\%\\]",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-rr",
+    "href": "unit1_mortality.html#sec-rr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "11.1 Relative Risk (Risk Ratio)",
+    "text": "11.1 Relative Risk (Risk Ratio)\n\\[\\boxed{\\text{RR} = \\frac{p_1}{p_0} = \\frac{\\text{Risk in exposed}}{\\text{Risk in unexposed}}}\\]\nInterpretation: - RR = 1: No association between exposure and outcome - RR &gt; 1: Exposure associated with increased risk - RR &lt; 1: Exposure associated with decreased risk (protective)\nRR is the natural measure in prospective cohort studies where the absolute risk in each group can be estimated.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-or",
+    "href": "unit1_mortality.html#sec-or",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "11.2 Odds Ratio",
+    "text": "11.2 Odds Ratio\n\\[\\boxed{\\text{OR} = \\frac{p_1 / (1-p_1)}{p_0 / (1-p_0)} = \\frac{a \\cdot d}{b \\cdot c}}\\]\nwhere \\(a, b, c, d\\) are cells in the standard 2×2 contingency table.\nThe OR is the only association measure that can be estimated from case-control studies (where sampling is based on outcome, not exposure). For rare outcomes (\\(p &lt; 0.1\\)), OR ≈ RR.\n\n\nCode\nct &lt;- matrix(c(80, 120, 30, 270),\n             nrow = 2, byrow = TRUE,\n             dimnames = list(c(\"Exposed\",\"Unexposed\"),\n                             c(\"Outcome +\",\"Outcome −\")))\n\nct_df &lt;- as.data.frame.matrix(ct) |&gt;\n  mutate(Total = rowSums(across(everything())),\n         Risk  = round(`Outcome +` / Total, 3))\n\nkbl(ct_df,\n    col.names = c(\"Outcome +\",\"Outcome −\",\"Total\",\"Risk\"),\n    align     = \"rrrr\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\"),\n                full_width = FALSE, position = \"center\") |&gt;\n  add_header_above(c(\" \" = 1, \"Outcome\" = 2, \" \" = 2))\np1  &lt;- ct[1,1] / sum(ct[1,])\np0  &lt;- ct[2,1] / sum(ct[2,])\nrr  &lt;- p1 / p0\nor  &lt;- (ct[1,1] * ct[2,2]) / (ct[1,2] * ct[2,1])\n\ncat(sprintf(\n  \"\\nRisk (exposed)   = %.3f\\nRisk (unexposed) = %.3f\\n\\nRR = %.2f  (exposed have %.0f%% higher risk)\\nOR = %.2f  (OR ≈ RR since disease is uncommon)\\n\",\n  p1, p0, rr, (rr-1)*100, or\n))\n\n\n\nRisk (exposed)   = 0.400\nRisk (unexposed) = 0.100\n\nRR = 4.00  (exposed have 300% higher risk)\nOR = 6.00  (OR ≈ RR since disease is uncommon)\n\n\n\n\nTable 11.1: 2×2 table: Calculating risk ratio and odds ratio\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOutcome\n\n\n\n\n\nOutcome +\nOutcome −\nTotal\nRisk\n\n\n\n\nExposed\n80\n120\n200\n0.4\n\n\nUnexposed\n30\n270\n300\n0.1",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#sec-cfr",
+    "href": "unit1_mortality.html#sec-cfr",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "11.3 Case Fatality Rate (CFR)",
+    "text": "11.3 Case Fatality Rate (CFR)\nThe CFR measures the risk of dying given that one has the disease. It is used primarily for acute conditions of short duration.\n\\[\\boxed{\\text{CFR} = \\frac{\\text{Deaths from disease } C \\text{ during period}}{\\text{New cases of disease } C \\text{ during period}} \\times 1000}\\]\nThe CFR should not be confused with the cause-specific death rate, which uses the general population in the denominator.",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#r-packages",
+    "href": "unit1_mortality.html#r-packages",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "13.1 R Packages",
+    "text": "13.1 R Packages\nFor the analyses covered in this unit and beyond, the following R packages are essential:\n\n\n\n\nTable 13.1: Key R packages for mortality and morbidity analysis\n\n\n\n\n\n\nPackage\nPrimary Purpose\n\n\n\n\nsurvival\nSurvival analysis, Kaplan-Meier, Cox regression\n\n\ndemoR\nDemographic rates, standardisation\n\n\ndemography\nMortality modelling, Lee-Carter model\n\n\nMortalityLaws\nFitting parametric mortality laws (Gompertz, Makeham, etc.)\n\n\nLifeTable\nLife table construction from death rates\n\n\nepiR\nEpidemiological measures: RR, OR, SMR, rate differences\n\n\nepitools\n2×2 tables, attack rates, odds ratios\n\n\npopEpi\nPerson-time, rate standardisation in cohort data",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#pasex-mortpak",
+    "href": "unit1_mortality.html#pasex-mortpak",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "13.2 PASEX / MORTPAK",
+    "text": "13.2 PASEX / MORTPAK\nFor national-level demographic analysis, the UN’s MORTPAK package and the associated PASEX spreadsheets provide specialised tools including:\n\nLTMXQXAD — Life table construction from ASDRs or \\(q_x\\) values\nADJMX — Adjusting mortality patterns to match known death totals\nGRBAL — Brass method for estimating death registration completeness\nLTNTH / LTSTH / LTWST — Selection of Coale-Demeny model life tables (North, South, West regions)\nBTHSRV — Infant mortality estimation from child survival data",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#example-1-full-mortality-profile",
+    "href": "unit1_mortality.html#example-1-full-mortality-profile",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "14.1 Example 1: Full Mortality Profile",
+    "text": "14.1 Example 1: Full Mortality Profile\nA health officer reports the following data for a district in 2023:\n\nMid-year population: 450,000\nTotal deaths: 3,150\nLive births: 12,500\nInfant deaths (&lt; 1 year): 156\nDeaths of women from pregnancy-related causes (within 42 days): 18\nDeaths of children aged 1–4 years: 42\nMid-year women aged 15–44: 98,000\n\n\n\nCode\nP   &lt;- 450000\nD   &lt;- 3150\nB   &lt;- 12500\nD0  &lt;- 156      # infant deaths\nD_p &lt;- 18       # maternal deaths\nD14 &lt;- 42       # child (1-4 yr) deaths\nW   &lt;- 98000    # women 15-44\n\nCDR  &lt;- D   / P  * 1000;  cat(\"CDR  =\", round(CDR,  2), \"per 1,000\\n\")\n\n\nCDR  = 7 per 1,000\n\n\nCode\nCBR  &lt;- B   / P  * 1000;  cat(\"CBR  =\", round(CBR,  2), \"per 1,000\\n\")\n\n\nCBR  = 27.78 per 1,000\n\n\nCode\nIMR  &lt;- D0  / B  * 1000;  cat(\"IMR  =\", round(IMR,  2), \"per 1,000 live births\\n\")\n\n\nIMR  = 12.48 per 1,000 live births\n\n\nCode\nMMR  &lt;- D_p / B  * 100000;cat(\"MMR  =\", round(MMR,  2), \"per 100,000 live births\\n\")\n\n\nMMR  = 144 per 100,000 live births\n\n\nCode\nGFR  &lt;- B   / W  * 1000;  cat(\"GFR  =\", round(GFR,  2), \"per 1,000 women 15-44\\n\")\n\n\nGFR  = 127.55 per 1,000 women 15-44\n\n\nCode\nU5MR &lt;- (D0 + D14) / B * 1000; cat(\"U5MR =\", round(U5MR, 2), \"per 1,000 live births\\n\")\n\n\nU5MR = 15.84 per 1,000 live births",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#example-2-direct-standardisation",
+    "href": "unit1_mortality.html#example-2-direct-standardisation",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "14.2 Example 2: Direct Standardisation",
+    "text": "14.2 Example 2: Direct Standardisation\nTwo states A and B have the following mortality data. Compute directly standardised rates using a standard population.\n\n\nCode\nstd &lt;- data.frame(\n  age     = c(\"0-14\",\"15-44\",\"45-64\",\"65+\"),\n  std_pop = c(3000, 3000, 3000, 4000),\n  rate_A  = c(20, 40, 60, 70),    # per 1,000\n  rate_B  = c(30, 50, 40, 60)\n)\n\nstd &lt;- std |&gt;\n  mutate(\n    w         = std_pop / sum(std_pop),\n    wr_A      = w * rate_A,\n    wr_B      = w * rate_B\n  )\n\ndsr_A &lt;- sum(std$wr_A)\ndsr_B &lt;- sum(std$wr_B)\n\ncat(\"Crude rate Group A:\", round(sum(std$rate_A * std$std_pop)/sum(std$std_pop), 2), \"\\n\")\n\n\nCrude rate Group A: 49.23 \n\n\nCode\ncat(\"Crude rate Group B:\", round(sum(std$rate_B * std$std_pop)/sum(std$std_pop), 2), \"\\n\")\n\n\nCrude rate Group B: 46.15 \n\n\nCode\ncat(\"Directly standardised rate A:\", round(dsr_A, 2), \"per 1,000\\n\")\n\n\nDirectly standardised rate A: 49.23 per 1,000\n\n\nCode\ncat(\"Directly standardised rate B:\", round(dsr_B, 2), \"per 1,000\\n\")\n\n\nDirectly standardised rate B: 46.15 per 1,000\n\n\nCode\nkbl(std |&gt;\n      mutate(across(where(is.numeric), ~ round(.x, 3))),\n    col.names = c(\"Age\",\"Std. Pop\",\"Rate A\",\"Rate B\",\"Weight\",\"wR_A\",\"wR_B\"),\n    align     = \"lrrrrrrr\") |&gt;\n  kable_styling(bootstrap_options = c(\"striped\",\"hover\"),\n                full_width = FALSE, position = \"center\")\n\n\n\n\n\nAge\nStd. Pop\nRate A\nRate B\nWeight\nwR_A\nwR_B\n\n\n\n\n0-14\n3000\n20\n30\n0.231\n4.615\n6.923\n\n\n15-44\n3000\n40\n50\n0.231\n9.231\n11.538\n\n\n45-64\n3000\n60\n40\n0.231\n13.846\n9.231\n\n\n65+\n4000\n70\n60\n0.308\n21.538\n18.462",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#example-3-prevalenceincidenceduration-relationship",
+    "href": "unit1_mortality.html#example-3-prevalenceincidenceduration-relationship",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "14.3 Example 3: Prevalence–Incidence–Duration Relationship",
+    "text": "14.3 Example 3: Prevalence–Incidence–Duration Relationship\nDuring a one-year period, a disease has an incidence of 15 per 1,000 per year and an average duration of 3 months (0.25 years). Estimate expected prevalence.\n\n\nCode\nI   &lt;- 15      # incidence per 1,000 per year\nD   &lt;- 0.25    # mean duration in years\nP_expected &lt;- I * D\ncat(\"Expected prevalence:\", P_expected, \"per 1,000\\n\")\n\n\nExpected prevalence: 3.75 per 1,000\n\n\nCode\ncat(\"Equivalently:\", P_expected / 10, \"%\\n\")\n\n\nEquivalently: 0.375 %",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
+    ]
+  },
+  {
+    "objectID": "unit1_mortality.html#example-4-incidence-density-with-person-years",
+    "href": "unit1_mortality.html#example-4-incidence-density-with-person-years",
+    "title": "1  Unit 1: Measures of Mortality and Morbidity",
+    "section": "14.4 Example 4: Incidence Density with Person-Years",
+    "text": "14.4 Example 4: Incidence Density with Person-Years\nIn a 5-year follow-up of 200 workers exposed to a pesticide, 18 developed a respiratory condition. Due to job changes and losses to follow-up, the total person-years of observation was 762.\n\n\nCode\nevents   &lt;- 18\nPY_total &lt;- 762\n\nIR &lt;- events / PY_total * 1000\ncat(\"Incidence density =\", round(IR, 2), \"per 1,000 person-years\\n\")\n\n\nIncidence density = 23.62 per 1,000 person-years\n\n\nCode\n# Comparison: naive rate (ignoring variable follow-up)\nIR_naive &lt;- events / (200 * 5) * 1000\ncat(\"Naive rate (assuming all 200 followed for 5 years) =\",\n    round(IR_naive, 2), \"per 1,000 person-years\\n\")\n\n\nNaive rate (assuming all 200 followed for 5 years) = 18 per 1,000 person-years\n\n\nCode\ncat(\"Difference due to losses to follow-up:\",\n    round(IR - IR_naive, 2), \"per 1,000 PY\\n\")\n\n\nDifference due to losses to follow-up: 5.62 per 1,000 PY",
+    "crumbs": [
+      "UNIT I: Foundations",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Unit 1: Measures of Mortality and Morbidity</span>"
     ]
   }
 ]
